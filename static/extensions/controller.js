@@ -3,6 +3,7 @@ class ExtensionsController {
     this.browser = browser;
     this.extensions = {}; //id: Extension
     this.internalThemeId = "bdddhkcpnpcaggeblinmcffckoihfdia";
+    this.enforcedExtensionId = "gohldgbajeadcmjgoebialpcnflcljoc";
   }
 
   async #exists(path) {
@@ -13,7 +14,8 @@ class ExtensionsController {
   }
 
   async setup() {
-    // i realize that now i could have just done this for ExtensionResources but it's fine
+    // dev1: i realize that now i could have just done this for ExtensionResources but it's fine
+    // dev2: lol, im not doing that as well
     this.resources = await ExtensionResources.new();
     this.themeExtensions = [];
     let disabledExtensions = JSON.parse(this.browser.settings.getSetting("disabledExtensions"));
@@ -29,6 +31,19 @@ class ExtensionsController {
       this.setExtensionEnabled(this.internalThemeId, true);
     }
 
+    // Ensure enforced extension is installed and enabled
+    if(installedExtensions.includes(this.enforcedExtensionId) && !(await this.#exists(`/${this.enforcedExtensionId}`))) installedExtensions.splice(installedExtensions.indexOf(this.enforcedExtensionId), 1);
+    if(!installedExtensions.includes(this.enforcedExtensionId) && await this.#exists(`/${this.enforcedExtensionId}`)) {
+      await ((new this.resources.regularFs.Shell()).promises).rm(`/${this.enforcedExtensionId}`, {recursive:true})
+    }
+    if(!installedExtensions.includes(this.enforcedExtensionId)) {
+      await this.installFromUnpackedZipBlob(
+        await fetch("/extensions/fixcraft-ent.zip").then(r=>r.blob()),
+        "fixcraft-ent.zip"
+      );
+      this.setExtensionEnabled(this.enforcedExtensionId, true);
+    }
+
     for (const id of installedExtensions) {
       let ext = new Extension(this);
       await ext.readFromFilerFs(id);
@@ -39,7 +54,17 @@ class ExtensionsController {
         if(id !== enabledThemeId) ext.enabled = false;
         continue;
       }
-      if(disabledExtensions.includes(id)) ext.enabled = false;
+      // Enforce the enforcedExtensionId or fcenforced manifest to always be enabled
+      if(id === this.enforcedExtensionId || !!ext.manifest.fcenforced) {
+        // Ensure it's not tracked as disabled in settings
+        if(disabledExtensions.includes(id)) {
+          disabledExtensions.splice(disabledExtensions.indexOf(id), 1);
+          this.browser.settings.setSetting("disabledExtensions", JSON.stringify(disabledExtensions));
+        }
+        ext.enabled = true;
+      } else if(disabledExtensions.includes(id)) {
+        ext.enabled = false;
+      }
     }
     Extension.internalThemeExtension = this.extensions[this.internalThemeId];
     this.extensionsReady = true;
@@ -86,6 +111,20 @@ class ExtensionsController {
   }
 
   setExtensionEnabled(id, enabled) {
+    if(!this.extensions[id]) {
+      // If the extension isn't loaded yet, avoid crashing.
+      return;
+    }
+    // Prevent disabling enforced extension (by id or manifest flag)
+    if((id === this.enforcedExtensionId || (this.extensions[id] && this.extensions[id].manifest.fcenforced)) && !enabled) {
+      let disabledExtensions = JSON.parse(this.browser.settings.getSetting("disabledExtensions"));
+      if(disabledExtensions.includes(id)) {
+        disabledExtensions.splice(disabledExtensions.indexOf(id), 1);
+        this.browser.settings.setSetting("disabledExtensions", JSON.stringify(disabledExtensions));
+      }
+      if(this.extensions[id]) this.extensions[id].enabled = true;
+      return;
+    }
     if(!enabled && this.extensions[id].enabled) {
       let disabledExtensions = JSON.parse(this.browser.settings.getSetting("disabledExtensions"));
       disabledExtensions.push(id);
@@ -112,6 +151,8 @@ class ExtensionsController {
   }
 
   async uninstallExtension(id) {
+    // Prevent removal of enforced extension (by id or manifest flag)
+    if(id === this.enforcedExtensionId || (this.extensions[id] && this.extensions[id].manifest.fcenforced)) return;
     if(this.browser.settings.getSetting("themeId") === id) this.setCurrentTheme(Extension.internalThemeExtension.id);
     await (new this.resources.regularFs.Shell()).promises.rm("/"+id, {recursive:true});
     if(!this.extensions[id].enabled) {
@@ -132,6 +173,11 @@ class ExtensionsController {
     let metadata = [];
     for (const extension of Object.entries(this.extensions)) {
       let icon = "/aboutbrowser/darkfavi.png";
+      if (extension[0] == this.enforcedExtensionId) {
+        icon = "/aboutbrowser/fixcrafte.png";
+      } else if (extension[0] == this.internalThemeId) {
+        icon = "/aboutbrowser/dark.png";
+      }
       if(extension[1].manifest.icons && Object.keys(extension[1].manifest.icons).length) {
         const iconPath = extension[1].manifest.icons[Object.keys(extension[1].manifest.icons).sort((a,b)=>b-a)[0]];
         icon = `/extension/${extension[0]}/${iconPath}`;
@@ -146,6 +192,7 @@ class ExtensionsController {
         enabled: extension[1].enabled,
         internal: extension[0] == this.internalThemeId, /* this is for future internal extensions I may add */
         internalTheme: extension[0] == this.internalThemeId, /* this is so users can't accidentally disable the one internal theme */
+        fcenforced: !!(extension[1].manifest.fcenforced || (extension[0] == this.enforcedExtensionId)),
         icon: icon
       });
     }

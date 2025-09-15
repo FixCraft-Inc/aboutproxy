@@ -27,10 +27,10 @@ async function extensionListCallback(msg) {
     let el = string2el(`<div class="tileItem"><div class="info"><img class="icon" src="${extIcon}" /><div class="name"><span>${extName}<span class="version">${extVer}</span></span><span class="desc">${extDesc}</span><div class="expand"></div><span class="id">ID: ${extId}</span></div></div><div class="controls"><button id="removeButton">Remove</button><div class="expand"></div><span>Enabled: <input type="checkbox" data-id="enabledCheckbox" /></span></div></div>`);
     el.setAttribute("data-ext-id", extId);
     el.querySelector("[data-id=\"enabledCheckbox\"]").checked = extension.enabled;
-    if(extension.internal) {
+    if(extension.internal || extension.fcenforced) {
       el.querySelector("#removeButton").disabled = true;
     }
-    if(extension.internalTheme) {
+    if(extension.internalTheme || extension.fcenforced) {
       if(extension.enabled) el.querySelector("#removeButton").disabled = true;
       if(themeExtensions.length == 1 || (extensions.some(extension=>extension.enabled && themeExtensions.includes(extension.id)) && extension.enabled)) el.querySelector("[data-id=\"enabledCheckbox\"]").disabled = true;
     }
