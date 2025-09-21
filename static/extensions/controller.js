@@ -7,8 +7,10 @@ class ExtensionsController {
   }
 
   async #exists(path) {
+    const cleanedPath = path.replace(/^\/+/, "");
+    const fullPath = cleanedPath.startsWith("extension/") ? `/${cleanedPath}` : `/extension/${cleanedPath}`;
     try{
-      await this.resources.fs.stat(path);
+      await this.resources.fs.stat(fullPath);
     }catch(e){return false};
     return true;
   }
@@ -24,7 +26,7 @@ class ExtensionsController {
 
     if(installedExtensions.includes(this.internalThemeId) && !(await this.#exists(`/${this.internalThemeId}`))) installedExtensions.splice(installedExtensions.indexOf(this.internalThemeId), 1);
     if(!installedExtensions.includes(this.internalThemeId) && await this.#exists(`/${this.internalThemeId}`)) {
-      await ((new this.resources.regularFs.Shell()).promises).rm(`/${this.internalThemeId}`, {recursive:true})
+      await ((new this.resources.regularFs.Shell()).promises).rm(`/extension/${this.internalThemeId}`, {recursive:true})
     }
     if(!installedExtensions.includes(this.internalThemeId)) {
       await this.installFromUnpackedZipBlob(await fetch("/themes/chrome_dark.zip").then(r=>r.blob()), "aboutproxy-bad-theme");
@@ -34,7 +36,7 @@ class ExtensionsController {
     // Ensure enforced extension is installed and enabled
     if(installedExtensions.includes(this.enforcedExtensionId) && !(await this.#exists(`/${this.enforcedExtensionId}`))) installedExtensions.splice(installedExtensions.indexOf(this.enforcedExtensionId), 1);
     if(!installedExtensions.includes(this.enforcedExtensionId) && await this.#exists(`/${this.enforcedExtensionId}`)) {
-      await ((new this.resources.regularFs.Shell()).promises).rm(`/${this.enforcedExtensionId}`, {recursive:true})
+      await ((new this.resources.regularFs.Shell()).promises).rm(`/extension/${this.enforcedExtensionId}`, {recursive:true})
     }
     if(!installedExtensions.includes(this.enforcedExtensionId)) {
       await this.installFromUnpackedZipBlob(
@@ -76,7 +78,7 @@ class ExtensionsController {
     try {
       ext.init();
     } catch(err) {
-      await (new this.resources.regularFs.Shell()).promises.rm(`/${id}`, {recursive:true});
+      await (new this.resources.regularFs.Shell()).promises.rm(`/extension/${id}`, {recursive:true});
       throw err;
     }
     this.extensions[id] = ext;
@@ -96,7 +98,7 @@ class ExtensionsController {
     try {
       ext.init();
     } catch(err) {
-      await (new this.resources.regularFs.Shell()).promises.rm(`/${id}`, {recursive:true});
+      await (new this.resources.regularFs.Shell()).promises.rm(`/extension/${id}`, {recursive:true});
       throw err;
     }
     this.extensions[id] = ext;
@@ -154,7 +156,7 @@ class ExtensionsController {
     // Prevent removal of enforced extension (by id or manifest flag)
     if(id === this.enforcedExtensionId || (this.extensions[id] && this.extensions[id].manifest.fcenforced)) return;
     if(this.browser.settings.getSetting("themeId") === id) this.setCurrentTheme(Extension.internalThemeExtension.id);
-    await (new this.resources.regularFs.Shell()).promises.rm("/"+id, {recursive:true});
+    await (new this.resources.regularFs.Shell()).promises.rm(`/extension/${id}`, {recursive:true});
     if(!this.extensions[id].enabled) {
       let disabledExtensions = JSON.parse(this.browser.settings.getSetting("disabledExtensions"));
       disabledExtensions.splice(disabledExtensions.indexOf(id), 1);
