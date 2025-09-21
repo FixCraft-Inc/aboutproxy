@@ -1,1 +1,1 @@
-console.log("Hello from aboutbrowser, TEST!")
+console.log("Hello from aboutbrowser, TEST! Fx")
