@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "FixCraft Inc. - Enterprise",
+  "version": "v1.1.0-femboy",
+  "icon": "/aboutbrowser/fixcrafte.png",
+  "description": "Enforced FixCraft integration for AboutBrowser.",
+  "content_scripts": [
+    {
+      "matches": ["*"],
+      "js": ["main.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "fcenforced": true
+}

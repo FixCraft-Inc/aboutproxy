@@ -3,13 +3,15 @@ class AboutBrowser {
     constructor(plugins) {
         this.branding = {
             name: "AboutBrowser",
-            version: "v0.9.0-dev"
+            version: "v0.9.1-beta"
         }
         this.addBranding();
 
         this.plugins = plugins;
-        this.resourcesProtocol = "aboutbrowser://"
+        this.resourcesProtocol = "aboutbrowser://";
+        this.fixcraftProtocol = "fixcraft://";
         this.resourcesPrefix = window.location.origin + "/aboutbrowser/";
+        this.fixcraftPrefix = window.location.origin + "/fixcraft/";
         this.titleSuffix = ` - ${this.branding.name}`;
         this.browserTitle = "New Tab" + this.titleSuffix;
         document.title = this.browserTitle;
@@ -195,6 +197,9 @@ class AboutBrowser {
                 break;
             case "settings":
                 this.openTab(this.resourcesProtocol + "settings");
+                break;
+            case "account":
+                this.openTab(this.fixcraftProtocol + "account");
                 break;
             case "about":
                 this.openTab(this.resourcesProtocol + "versionHistory");

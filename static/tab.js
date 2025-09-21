@@ -83,7 +83,7 @@ class Tab {
         (async (url) => {
             // get favicon of iframe
             var favi = null;
-            if (url.startsWith(this.browser.resourcesProtocol)) {
+            if (url.startsWith(this.browser.resourcesProtocol) || url.startsWith(this.browser.fixcraftProtocol)) {
                 favi = getIconNoFallback(self.iframe.contentWindow.document);
             } else if (url != "") {
                 var faviUrl = getIcon(self.iframe.contentWindow.document, new URL(url));
@@ -202,6 +202,15 @@ class Tab {
                 url = this.browser.resourcesPrefix + "blank.html";
             } else if (url.startsWith(this.browser.resourcesProtocol)) {
                 url = url.replace(this.browser.resourcesProtocol, this.browser.resourcesPrefix);
+                url = url + ".html"
+            }
+            this.iframe.src = url;
+            if (callback) callback();
+        } else if (url == "" || url.startsWith(this.browser.fixcraftProtocol)) {
+            if (url == "") {
+                url = this.browser.resourcesPrefix + "blank.html";
+            } else if (url.startsWith(this.browser.fixcraftProtocol)) {
+                url = url.replace(this.browser.fixcraftProtocol, this.browser.fixcraftPrefix);
                 url = url + ".html"
             }
             this.iframe.src = url;
