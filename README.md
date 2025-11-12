@@ -1,4 +1,8 @@
 # aboutproxy
+
+> **IridiumOS Fork**  
+> This FixCraft Inc. build is tailored exclusively for IridiumOS deployments. For general-purpose usage, please use the upstream project at [MercuryWorkshop/aboutproxy](https://github.com/MercuryWorkshop/aboutproxy).
+
 ~~Hypertabs clone but different~~ Velocity clone but different
 
 Chrome in your browser

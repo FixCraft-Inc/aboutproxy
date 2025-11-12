@@ -5,11 +5,16 @@
   },
   "name": "aboutproxy",
   "version": "dev",
-  "description": "Chrome in your browser.",
+  "description": "IridiumOS-focused Chrome-in-your-browser proxy shell.",
   "main": "index.js",
   "scripts": {
     "start": "node ."
   },
-  "author": "",
-  "license": "GPL-3.0-or-later"
+  "author": "Mercury Workshop, F1xGOD",
+  "license": "GPL-3.0-or-later",
+  "repository": "https://github.com/FixCraft-Inc/aboutproxy",
+  "bugs": {
+    "url": "https://github.com/FixCraft-Inc/aboutproxy/issues"
+  },
+  "homepage": "https://github.com/FixCraft-Inc/aboutproxy#readme"
 }
