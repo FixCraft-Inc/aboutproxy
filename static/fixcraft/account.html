@@ -1,8 +1,164 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Information</title>
-    <link rel="stylesheet" href="styles.css">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FixCraft Account Portal</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="../build-flags.js"></script>
+	</head>
+	<body>
+		<main class="fc-shell">
+			<header class="fc-hero">
+				<p class="fc-eyebrow">FixCraft Identity</p>
+				<h1>Manage your account on this device</h1>
+				<p class="fc-intro">
+					IridiumOS keeps everything local, but certain enterprise features can link
+					your session with a FixCraft ID. Use this dashboard to review the current
+					status, reconnect, or open the external FixCraft portal.
+				</p>
+			</header>
+
+			<section class="fc-card fc-card--status">
+				<div>
+					<h2>Device status</h2>
+					<p data-fc-status>
+						Checking for a linked account on this session...
+					</p>
+				</div>
+				<dl class="fc-meta">
+					<div>
+						<dt>Iridium build</dt>
+						<dd data-iridium-version>Unknown</dd>
+					</div>
+					<div>
+						<dt>Platform</dt>
+						<dd data-iridium-platform>Unavailable</dd>
+					</div>
+				</dl>
+				<div class="fc-actions">
+					<button data-action="connect" class="primary">Link FixCraft ID</button>
+					<button data-action="refresh">Sync status</button>
+				</div>
+			</section>
+
+			<section class="fc-grid">
+				<article class="fc-card">
+					<h3>Why link an account?</h3>
+					<ul>
+						<li>Sync enterprise policies delivered through FixCraft Portal.</li>
+						<li>Unlock remote debugging and secure profile migration.</li>
+						<li>Register this device for organization‑wide compliance checks.</li>
+					</ul>
+				</article>
+				<article class="fc-card">
+					<h3>Privacy first</h3>
+					<p>
+						Your files and settings stay within the browser sandbox. Linking an
+						account only exchanges the identifier needed for FixCraft services; no
+						telemetry is uploaded from this view.
+					</p>
+					<p>
+						Need more details? Review the
+						<a href="https://www.fixcraft.org/terms-privacy" target="_blank" rel="noreferrer noopener">FixCraft privacy statement</a>.
+					</p>
+				</article>
+			</section>
+
+			<section class="fc-card fc-card--portal">
+				<div>
+					<h3>Open the FixCraft Portal</h3>
+					<p>
+						To change your password, manage subscriptions, or revoke device access,
+						continue in the official FixCraft Portal.
+					</p>
+				</div>
+				<button data-action="open-portal">Launch portal</button>
+			</section>
+
+			<footer class="fc-footer">
+				<span>© <span data-year></span> FixCraft®</span>
+				<span>All rights reserved.</span>
+			</footer>
+		</main>
+
+    <script>
+      (() => {
+        const buildFlags =
+          window.top?.AboutBrowserBuildFlags ||
+          window.AboutBrowserBuildFlags ||
+          {};
+        if (buildFlags.disableAccountPortal) {
+          document.body.innerHTML = `
+            <main class="fc-shell">
+              <header class="fc-hero">
+                <p class="fc-eyebrow">FixCraft Identity</p>
+                <h1>Account controls disabled</h1>
+                <p class="fc-intro">
+                  This build runs from a read-only GitHub Pages deployment, so the FixCraft account portal is unavailable.
+                </p>
+              </header>
+              <section class="fc-card">
+                <p>
+                  Download a self-hosted release or run the official server toolkit to enable account linking,
+                  namespaces, WireGuard, and other features that require privileged components.
+                </p>
+              </section>
+            </main>`;
+          return;
+        }
+        const desktop = window.top?.iridium || window.top?.anura;
+        const accountStatus = document.querySelector('[data-fc-status]');
+				const versionEl = document.querySelector('[data-iridium-version]');
+				const platformEl = document.querySelector('[data-iridium-platform]');
+				const yearEl = document.querySelector('[data-year]');
+				yearEl.textContent = new Date().getFullYear();
+
+				const renderStatus = () => {
+					if (!desktop) {
+						accountStatus.textContent =
+							"This Iridium session is offline or running outside the desktop shell.";
+						versionEl.textContent = "Unavailable";
+						platformEl.textContent = "Browser only";
+						return;
+					}
+
+					const version = desktop.version?.pretty || "Custom build";
+					const codename = desktop.version?.codename;
+					versionEl.textContent = codename ? `${version} (${codename})` : version;
+					platformEl.textContent = desktop.platform?.type || "Unknown";
+
+					const linked = desktop.settings?.get("fixcraft-account");
+					if (linked?.id || linked?.email) {
+						const identity = linked.email || linked.id;
+						accountStatus.textContent = `Linked to ${identity}`;
+					} else {
+						accountStatus.textContent =
+							"No FixCraft ID is currently linked to this profile.";
+					}
+				};
+
+				const openPortal = () => {
+					const url = "https://fixcraft.org/account";
+					if (desktop?.uri) {
+						desktop.uri.handle(url);
+						return;
+					}
+					window.open(url, "_blank", "noreferrer");
+				};
+
+				document
+					.querySelector('[data-action="connect"]')
+					.addEventListener('click', openPortal);
+				document
+					.querySelector('[data-action="open-portal"]')
+					.addEventListener('click', openPortal);
+				document
+					.querySelector('[data-action="refresh"]')
+					.addEventListener('click', renderStatus);
+
+				renderStatus();
+			})();
+		</script>
+	</body>
 </html>

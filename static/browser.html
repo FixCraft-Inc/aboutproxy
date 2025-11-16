@@ -39,6 +39,7 @@
   <script src="extensions/resources.js"></script>
   <script src="extensions/extension.js"></script>
   <script src="extensions/controller.js"></script>
+  <script src="build-flags.js"></script>
   <script src="browser.js"></script>
   <script src="browser-api.js"></script>
 </head>
@@ -117,7 +118,7 @@
           <button onclick="window.aboutbrowser.handleSettingsCtxMenu('devtools');">
             <span class="material-symbols-outlined menuIcon">code</span><span class="title">Developer Tools</span>
           </button>
-          <button onclick="window.aboutbrowser.handleSettingsCtxMenu('account');">
+          <button id="browserAccountMenuItem" data-menu-item="account" onclick="window.aboutbrowser.handleSettingsCtxMenu('account');">
             <span class="material-symbols-outlined menuIcon">person</span><span class="title">My Account</span>
           </button>
           <div class="sep"></div>

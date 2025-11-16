@@ -1,0 +1,185 @@
+:root {
+	font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont,
+		'Roboto', sans-serif;
+	color-scheme: dark;
+	--fc-bg: radial-gradient(circle at top, #1f2940, #0b101c 60%);
+	--fc-card: rgba(16, 20, 33, 0.9);
+	--fc-border: rgba(255, 255, 255, 0.08);
+	--fc-primary: #63a1ff;
+	--fc-primary-strong: #327bff;
+	--fc-text: #f5f7fb;
+	--fc-muted: #9aa3ba;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	padding: 2rem;
+	background: var(--fc-bg);
+	color: var(--fc-text);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.fc-shell {
+	width: min(960px, 100%);
+	background: var(--fc-card);
+	border-radius: 24px;
+	padding: clamp(1.5rem, 4vw, 3rem);
+	box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	border: 1px solid var(--fc-border);
+}
+
+.fc-hero h1 {
+	margin-top: 0.25rem;
+	margin-bottom: 0.75rem;
+	font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.fc-eyebrow {
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	font-size: 0.75rem;
+	color: var(--fc-muted);
+	margin: 0;
+}
+
+.fc-intro {
+	margin: 0;
+	line-height: 1.5;
+	color: var(--fc-muted);
+}
+
+.fc-card {
+	background: rgba(255, 255, 255, 0.02);
+	border-radius: 18px;
+	padding: 1.25rem 1.5rem;
+	border: 1px solid var(--fc-border);
+	line-height: 1.5;
+}
+
+.fc-card--status {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem 2rem;
+	align-items: flex-start;
+}
+
+.fc-meta {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 0.5rem 1.25rem;
+	margin: 0;
+}
+
+.fc-meta dt {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--fc-muted);
+}
+
+.fc-meta dd {
+	margin: 0;
+	font-weight: 600;
+}
+
+.fc-actions {
+	display: flex;
+	gap: 0.75rem;
+	margin-left: auto;
+	flex-wrap: wrap;
+}
+
+button {
+	font: inherit;
+	border-radius: 999px;
+	padding: 0.65rem 1.4rem;
+	border: 1px solid transparent;
+	background: rgba(255, 255, 255, 0.08);
+	color: var(--fc-text);
+	cursor: pointer;
+	transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+button.primary {
+	background: var(--fc-primary);
+	color: #071227;
+	border-color: transparent;
+}
+
+button:hover {
+	background: rgba(255, 255, 255, 0.16);
+}
+
+button.primary:hover {
+	background: var(--fc-primary-strong);
+}
+
+.fc-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 1rem;
+}
+
+.fc-card--portal {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.fc-card ul {
+	padding-left: 1.25rem;
+	margin: 0.25rem 0 0;
+	color: var(--fc-muted);
+}
+
+.fc-card p {
+	margin: 0.25rem 0;
+	color: var(--fc-muted);
+}
+
+a {
+	color: var(--fc-primary);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.fc-footer {
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	font-size: 0.9rem;
+	color: var(--fc-muted);
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--fc-border);
+}
+
+@media (max-width: 720px) {
+	body {
+		padding: 1rem;
+	}
+
+	.fc-card--status,
+	.fc-card--portal {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.fc-actions {
+		width: 100%;
+		justify-content: flex-start;
+	}
+}

@@ -47,16 +47,28 @@ class Tab {
 
         if (url.startsWith(this.browser.resourcesPrefix)) {
             url = url.replace(this.browser.resourcesPrefix, '');
-            url = url.substring(0, url.length - 5);
+            if (url.endsWith(".html")) {
+                url = url.substring(0, url.length - 5);
+            }
             url = this.browser.resourcesProtocol + url;
+        } else if (url.startsWith(this.browser.fixcraftPrefix)) {
+            url = url.replace(this.browser.fixcraftPrefix, '');
+            if (url.endsWith(".html")) {
+                url = url.substring(0, url.length - 5);
+            }
+            url = this.browser.fixcraftProtocol + url;
         } else {
             url = url.replace(window.location.origin + baseUrlFor(this.browser.settings.getSetting("currentProxyId")), '')
             url = decodeUrl(url, this.browser.settings.getSetting("currentProxyId"));
             if (!url.startsWith("http") && !url.startsWith("https")) {
                 this.handleHistoryBack();
-                top.anura.dialog.confirm(`This website wants to open ${url}`).then((res) => {
+                const desktop = top.iridium || top.anura;
+                if (!desktop) {
+                    return;
+                }
+                desktop.dialog.confirm(`This website wants to open ${url}`).then((res) => {
                     if (res === true) {
-                        top.anura.uri.handle(url);
+                        desktop.uri.handle(url);
                     }
                 })
             }
@@ -196,25 +208,26 @@ class Tab {
 
     navigateTo(url, callback) {
         var self = this;
+        url = url ?? "";
+        const loadInternal = (target) => {
+            this.iframe.src = target;
+            if (callback) callback();
+        };
         // TODO: allow registering custom protocols and clean this up
-        if (url == "" || url.startsWith(this.browser.resourcesProtocol)) {
-            if (url == "") {
-                url = this.browser.resourcesPrefix + "blank.html";
-            } else if (url.startsWith(this.browser.resourcesProtocol)) {
-                url = url.replace(this.browser.resourcesProtocol, this.browser.resourcesPrefix);
-                url = url + ".html"
+        if (url === "") {
+            loadInternal(this.browser.resourcesPrefix + "blank.html");
+        } else if (url.startsWith(this.browser.resourcesProtocol)) {
+            url = url.replace(this.browser.resourcesProtocol, this.browser.resourcesPrefix);
+            if (!url.endsWith(".html")) {
+                url = url + ".html";
             }
-            this.iframe.src = url;
-            if (callback) callback();
-        } else if (url == "" || url.startsWith(this.browser.fixcraftProtocol)) {
-            if (url == "") {
-                url = this.browser.resourcesPrefix + "blank.html";
-            } else if (url.startsWith(this.browser.fixcraftProtocol)) {
-                url = url.replace(this.browser.fixcraftProtocol, this.browser.fixcraftPrefix);
-                url = url + ".html"
+            loadInternal(url);
+        } else if (url.startsWith(this.browser.fixcraftProtocol)) {
+            url = url.replace(this.browser.fixcraftProtocol, this.browser.fixcraftPrefix);
+            if (!url.endsWith(".html")) {
+                url = url + ".html";
             }
-            this.iframe.src = url;
-            if (callback) callback();
+            loadInternal(url);
         } else if (url.startsWith("javascript:")) {
             let el = this.iframe.contentWindow.document.createElement("script");
             el.textContent = url;
@@ -241,4 +254,3 @@ class Tab {
         }
     }
 }
-

@@ -74,6 +74,17 @@ class AboutBrowser {
         this.settingsCtxMenu = document.querySelector(".moreMenu");
         this.settingsCtxBtn = document.querySelector(".navbarBtn#browserSettings");
         this.ctxMenuClickChecker = document.querySelector(".ctxMenuClickChecker");
+        const buildFlags =
+            (typeof window.AboutBrowserBuildFlags === "object" && window.AboutBrowserBuildFlags !== null)
+                ? window.AboutBrowserBuildFlags
+                : {};
+        this.accountPortalEnabled = !buildFlags.disableAccountPortal;
+        if (!this.accountPortalEnabled) {
+            const accountMenuItem = document.querySelector("#browserAccountMenuItem");
+            if (accountMenuItem) {
+                accountMenuItem.remove();
+            }
+        }
         this.ctxMenuClickChecker.addEventListener("click", () => {
             self.settingsCtxMenu.classList.add("hidden");
             self.ctxMenuClickChecker.style.setProperty('display', 'none');
@@ -199,6 +210,9 @@ class AboutBrowser {
                 this.openTab(this.resourcesProtocol + "settings");
                 break;
             case "account":
+                if (!this.accountPortalEnabled) {
+                    return;
+                }
                 this.openTab(this.fixcraftProtocol + "account");
                 break;
             case "about":
