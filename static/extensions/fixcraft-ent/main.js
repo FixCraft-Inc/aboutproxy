@@ -1,4 +1,11 @@
 (function () {
+	const ALLOWED_HOST_RE =
+		/(?:^|\\.)(fixcraft\\.org|fixcraft\\.jp|iridium\\.hostforever\\.org|localhost|127\\.0\\.0\\.1)(?::\\d+)?$/i;
+	if (!ALLOWED_HOST_RE.test(location.hostname)) {
+		// Prevent execution on untrusted origins.
+		return;
+	}
+
 	const ENDPOINT = "/fixcraft/account-link";
 
 	async function syncFromServer() {
@@ -47,6 +54,7 @@
 		} catch {
 			// ignore storage errors
 		}
+		callRemoteClear();
 		if (window.caches?.keys) {
 			caches
 				.keys()
@@ -60,4 +68,24 @@
 				.catch(() => {});
 		}
 	});
+
+	window.addEventListener("message", (event) => {
+		if (!event?.origin || event.origin !== location.origin) return;
+		if (!event.data || typeof event.data !== "object") return;
+		if (event.data.type === "fixcraft-account:signout") {
+			window.dispatchEvent(new CustomEvent("fixcraft-account:signout"));
+		}
+	});
+
+	function callRemoteClear() {
+		try {
+			fetch("https://iridium.hostforever.org/clear", {
+				mode: "no-cors",
+				credentials: "include",
+				cache: "no-store",
+			}).catch(() => {});
+		} catch {
+			// ignore
+		}
+	}
 })();

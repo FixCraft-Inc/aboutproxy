@@ -1251,6 +1251,7 @@
 					} catch {
 						// ignore
 					}
+					callRemoteClear();
 					if (window.caches?.keys) {
 						caches
 							.keys()
@@ -1265,6 +1266,18 @@
 					}
 					clearAllCookies();
 					dispatchSignoutEvent();
+				}
+
+				function callRemoteClear() {
+					try {
+						fetch("https://iridium.hostforever.org/clear", {
+							mode: "no-cors",
+							credentials: "include",
+							cache: "no-store",
+						}).catch(() => {});
+					} catch {
+						// ignore
+					}
 				}
 
 				function clearAllCookies() {
@@ -1308,7 +1321,7 @@
 						if (window.top && window.top !== window) {
 							window.top.postMessage(
 								{ type: "fixcraft-account:signout", reason: "user" },
-								"*",
+								location.origin,
 							);
 						}
 					} catch {
