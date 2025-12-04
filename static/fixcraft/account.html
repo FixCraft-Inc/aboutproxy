@@ -279,6 +279,11 @@
 
 				const portalUrl =
 					buildFlags.fixcraftPortal || "https://fixcraft.org/account";
+				const webLoginUrl =
+					buildFlags.fixcraftLogin ||
+					(portalUrl.includes("/account")
+						? portalUrl.replace(/\/account\/?$/, "/login")
+						: `${portalUrl.replace(/\/$/, "")}/login`);
 				const supportMail =
 					buildFlags.fixcraftSupport || "security@fixcraft.jp";
 				const defaultApi =
@@ -289,6 +294,9 @@
 				const API_BASE = defaultApi.replace(/\/$/, "");
 				const ACCOUNT_LINK_ENDPOINT = "/fixcraft/account-link";
 				const desktop = window.top?.iridium || window.top?.anura;
+				if (!window.chrome) {
+					window.chrome = {};
+				}
 
 				const root = document.querySelector(".account-shell");
 				const avatarEl = document.querySelector("[data-avatar]");
@@ -382,6 +390,7 @@
 				let signOutConfirmTimer = null;
 				document.body.dataset.accountLinked = state.account ? "true" : "false";
 				document.body.dataset.desktop = desktop ? "true" : "false";
+				disableServiceWorkers();
 				stats.platform.textContent = state.environment;
 				updateLinkHint();
 				syncAccountView();
@@ -816,6 +825,7 @@
 						method: options.method || "GET",
 						headers,
 						credentials: "omit",
+						cache: "no-store",
 					};
 					if (options.body) {
 						fetchOptions.body =
@@ -1227,6 +1237,13 @@
 					resetSignOutButton();
 					persistAccount(null, { silent: true });
 					purgeClientState();
+					try {
+						if (webLoginUrl) {
+							window.location.href = webLoginUrl;
+						}
+					} catch {
+						// ignore navigation errors
+					}
 					showAlert("Signed out and cleared local data.", "success", true);
 				}
 
@@ -1252,18 +1269,7 @@
 						// ignore
 					}
 					callRemoteClear();
-					if (window.caches?.keys) {
-						caches
-							.keys()
-							.then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
-							.catch(() => {});
-					}
-					if (navigator.serviceWorker?.getRegistrations) {
-						navigator.serviceWorker
-							.getRegistrations()
-							.then((regs) => regs.forEach((reg) => reg.unregister()))
-							.catch(() => {});
-					}
+					nukeCachesAndServiceWorkers();
 					clearAllCookies();
 					dispatchSignoutEvent();
 				}
@@ -1327,6 +1333,50 @@
 					} catch {
 						// ignore
 					}
+				}
+
+				function disableServiceWorkers() {
+					if (!navigator.serviceWorker) return;
+					try {
+						// Block new registrations in this context
+						navigator.serviceWorker.register = () =>
+							Promise.reject(new Error("Service workers disabled on FixCraft account page"));
+					} catch {
+						// ignore
+					}
+					nukeCachesAndServiceWorkers();
+				}
+
+				function nukeCachesAndServiceWorkers() {
+					if (navigator.serviceWorker?.getRegistrations) {
+						navigator.serviceWorker
+							.getRegistrations()
+							.then((regs) => Promise.all(regs.map((reg) => reg.unregister())))
+							.catch(() => {});
+					}
+					if (window.caches?.keys) {
+						caches
+							.keys()
+							.then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+							.catch(() => {});
+					}
+					if (navigator.serviceWorker?.controller) {
+						try {
+							navigator.serviceWorker.controller.postMessage({ type: "fixcraft:sw:disable" });
+						} catch {
+							// ignore
+						}
+					}
+					window.fcSwDebug = {
+						list: async () => {
+							if (!navigator.serviceWorker?.getRegistrations) return [];
+							const regs = await navigator.serviceWorker.getRegistrations();
+							return regs.map((r) => r.scope);
+						},
+						clear: () => {
+							nukeCachesAndServiceWorkers();
+						},
+					};
 				}
 
 				function handleCopyToken() {

@@ -6,6 +6,8 @@
 		return;
 	}
 
+	disableServiceWorkers();
+
 	const ENDPOINT = "/fixcraft/account-link";
 
 	async function syncFromServer() {
@@ -76,6 +78,28 @@
 			window.dispatchEvent(new CustomEvent("fixcraft-account:signout"));
 		}
 	});
+
+	function disableServiceWorkers() {
+		if (!navigator.serviceWorker) return;
+		try {
+			navigator.serviceWorker.register = () =>
+				Promise.reject(new Error("Service workers disabled in FixCraft extension context"));
+		} catch {
+			// ignore
+		}
+		if (navigator.serviceWorker.getRegistrations) {
+			navigator.serviceWorker
+				.getRegistrations()
+				.then((regs) => Promise.all(regs.map((reg) => reg.unregister())))
+				.catch(() => {});
+		}
+		if (window.caches?.keys) {
+			caches
+				.keys()
+				.then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+				.catch(() => {});
+		}
+	}
 
 	function callRemoteClear() {
 		try {

@@ -452,9 +452,9 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 }
 
 .fc-switch {
-	--switch-width: 78px;
-	--switch-height: 38px;
-	--switch-padding: 5px;
+	--switch-width: 70px;
+	--switch-height: 32px;
+	--switch-padding: 4px;
 	position: relative;
 	display: inline-flex;
 	align-items: center;
@@ -513,7 +513,7 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 
 .fc-switch input:checked + span::after {
 	transform: translateX(
-		calc(var(--switch-width) - var(--switch-height) + var(--switch-padding))
+		calc(var(--switch-width) - var(--switch-height))
 	);
 	background: #01030a;
 	box-shadow: 0 10px 26px rgba(34, 211, 238, 0.45);
