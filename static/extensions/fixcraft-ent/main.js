@@ -81,16 +81,28 @@
 
 	function disableServiceWorkers() {
 		if (!navigator.serviceWorker) return;
-		try {
-			navigator.serviceWorker.register = () =>
-				Promise.reject(new Error("Service workers disabled in FixCraft extension context"));
-		} catch {
-			// ignore
-		}
 		if (navigator.serviceWorker.getRegistrations) {
 			navigator.serviceWorker
 				.getRegistrations()
-				.then((regs) => Promise.all(regs.map((reg) => reg.unregister())))
+				.then((regs) =>
+					Promise.all(
+						regs.map((reg) => {
+							const script = reg.active?.scriptURL || reg.scriptURL || "";
+							if (script.includes("/sw.js") && !script.includes("iridium-sw.js")) {
+								return Promise.resolve();
+							}
+							if (script.includes("iridium-sw.js")) {
+								try {
+									reg.active?.postMessage({ type: "fixcraft:sw:disable" });
+								} catch {
+									// ignore
+								}
+								return Promise.resolve();
+							}
+							return reg.unregister();
+						}),
+					),
+				)
 				.catch(() => {});
 		}
 		if (window.caches?.keys) {
