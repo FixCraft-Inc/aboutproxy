@@ -365,15 +365,22 @@
 					],
 				};
 
+				const SESSION_STORAGE_KEY = "fixcraft-session-id";
+				const SESSION_HEARTBEAT_INTERVAL_MS = 60 * 1000;
+
 				const state = {
 					account: readAccount(),
 					profile: null,
 					sessions: [],
 					environment: describeEnvironment(),
 					loading: false,
+					sessionId: readStoredSessionId(),
 				};
 
 				let revealTimer = null;
+				let avatarObjectUrl = null;
+				let avatarLoadId = 0;
+				let sessionHeartbeatTimer = null;
 				document.body.dataset.accountLinked = state.account ? "true" : "false";
 				document.body.dataset.desktop = desktop ? "true" : "false";
 				stats.platform.textContent = state.environment;
@@ -409,6 +416,7 @@
 
 				if (state.account?.token) {
 					fetchProfile();
+					scheduleSessionHeartbeat();
 				} else {
 					root.dataset.view = "empty";
 				}
@@ -421,6 +429,7 @@
 					input.addEventListener("change", handlePrefToggle),
 				);
 				avatarFileInput?.addEventListener("change", handleAvatarUpload);
+				window.addEventListener("focus", () => sendSessionHeartbeat());
 
 				function readAccount() {
 					const fromSettings = safeReadSetting();
@@ -463,6 +472,43 @@
 					}
 				}
 
+				function readStoredSessionId() {
+					try {
+						return localStorage.getItem(SESSION_STORAGE_KEY) || null;
+					} catch {
+						return null;
+					}
+				}
+
+				function persistSessionId(value) {
+					state.sessionId = value;
+					try {
+						if (value) {
+							localStorage.setItem(SESSION_STORAGE_KEY, value);
+						} else {
+							localStorage.removeItem(SESSION_STORAGE_KEY);
+						}
+					} catch {
+						// ignore
+					}
+				}
+
+				function ensureSessionId() {
+					if (state.sessionId) {
+						return state.sessionId;
+					}
+					const generated = generateSessionId();
+					persistSessionId(generated);
+					return generated;
+				}
+
+				function generateSessionId() {
+					if (typeof crypto !== "undefined" && crypto.randomUUID) {
+						return crypto.randomUUID();
+					}
+					return `fc-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
+				}
+
 				function persistAccount(value, opts = {}) {
 					if (!value) {
 						try {
@@ -478,6 +524,8 @@
 						updateLinkHint();
 						syncAccountView();
 						updateAvatar(null);
+						persistSessionId(null);
+						stopSessionHeartbeat();
 						if (!opts.silent) {
 							showAlert("Signed out of FixCraft.", "success");
 						}
@@ -520,6 +568,7 @@
 					);
 					updateLinkHint();
 					syncAccountView();
+					scheduleSessionHeartbeat();
 					if (!opts.silent) {
 						showAlert("Linked to FixCraft.", "success");
 					}
@@ -537,6 +586,53 @@
 						desktop.platform ||
 						"Iridium";
 					return [platform, version].filter(Boolean).join(" • ");
+				}
+
+				function scheduleSessionHeartbeat() {
+					if (!state.account?.token) return;
+					sendSessionHeartbeat();
+					if (sessionHeartbeatTimer) {
+						clearInterval(sessionHeartbeatTimer);
+					}
+					sessionHeartbeatTimer = setInterval(() => {
+						sendSessionHeartbeat();
+					}, SESSION_HEARTBEAT_INTERVAL_MS);
+				}
+
+				function stopSessionHeartbeat() {
+					if (sessionHeartbeatTimer) {
+						clearInterval(sessionHeartbeatTimer);
+						sessionHeartbeatTimer = null;
+					}
+				}
+
+				function sendSessionHeartbeat(extra = {}) {
+					if (!state.account?.token) return;
+					const sessionId = ensureSessionId();
+					const tz =
+						Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+					const payload = {
+						sessionId,
+						title: state.environment,
+						platform:
+							navigator.userAgentData?.platform ||
+							navigator.platform ||
+							"unknown",
+						location: state.profile?.location || null,
+						timezone: tz,
+						lastSeen: "Just now",
+						...extra,
+					};
+					apiRequest("/api/sessions/heartbeat", {
+						method: "POST",
+						body: payload,
+					})
+						.then((response) => {
+							if (response?.sessionId && response.sessionId !== state.sessionId) {
+								persistSessionId(response.sessionId);
+							}
+						})
+						.catch(() => {});
 				}
 
 				async function bootstrapFromServer() {
@@ -696,32 +792,52 @@
 					}
 				}
 
-				async function apiRequest(path, options = {}) {
+				async function apiFetch(pathOrUrl, options = {}) {
 					if (!state.account?.token) {
-						throw new Error("missing_token");
+						const error = new Error("missing_token");
+						error.status = 401;
+						throw error;
 					}
-					const url = buildApiUrl(path);
+					const url = buildApiUrl(pathOrUrl);
+					const headers = {
+						...(options.headers || {}),
+					};
+					if (!options.raw) {
+						headers.Accept = headers.Accept || "application/json";
+					}
+					if (options.body && !headers["Content-Type"]) {
+						headers["Content-Type"] = "application/json";
+					}
+					headers.Authorization = `Bearer ${state.account.token}`;
+					const sessionId = ensureSessionId();
+					if (sessionId) {
+						headers["X-FC-Session-ID"] = sessionId;
+					}
 					const fetchOptions = {
 						method: options.method || "GET",
-						headers: {
-							Accept: "application/json",
-							...(options.headers || {}),
-						},
+						headers,
+						credentials: "omit",
 					};
 					if (options.body) {
 						fetchOptions.body =
 							typeof options.body === "string"
 								? options.body
 								: JSON.stringify(options.body);
-						if (!fetchOptions.headers["Content-Type"]) {
-							fetchOptions.headers["Content-Type"] = "application/json";
-						}
 					}
-					fetchOptions.headers.Authorization = `Bearer ${state.account.token}`;
 					const response = await fetch(url, fetchOptions);
-					const text = await response.text();
-					const data = text ? JSON.parse(text) : null;
 					if (!response.ok) {
+						if (options.raw) {
+							const err = new Error(`Request failed (${response.status})`);
+							err.status = response.status;
+							throw err;
+						}
+						let data = null;
+						try {
+							const text = await response.text();
+							data = text ? JSON.parse(text) : null;
+						} catch {
+							data = null;
+						}
 						const message =
 							data?.error ||
 							data?.message ||
@@ -730,7 +846,13 @@
 						err.status = response.status;
 						throw err;
 					}
-					return data;
+					return response;
+				}
+
+				async function apiRequest(path, options = {}) {
+					const response = await apiFetch(path, options);
+					const text = await response.text();
+					return text ? JSON.parse(text) : null;
 				}
 
 				function buildApiUrl(path) {
@@ -796,6 +918,7 @@
 					if (!sessionList) return;
 					sessionList.innerHTML = "";
 					const list = Array.isArray(state.sessions) ? state.sessions : [];
+					const currentSessionId = state.sessionId;
 					if (!state.profile) {
 						sessionList.innerHTML =
 							'<li class="session-empty">Link your account to see active sessions.</li>';
@@ -809,19 +932,30 @@
 					list.forEach((session) => {
 						const node =
 							sessionTemplate.content.firstElementChild.cloneNode(true);
-						node.querySelector("[data-row-title]").textContent =
+						const titleEl = node.querySelector("[data-row-title]");
+						const metaEl = node.querySelector("[data-row-meta]");
+						titleEl.textContent =
 							session.title || session.platform || "Unnamed device";
-						const metaParts = [
-							session.platform,
-							session.location,
-							session.lastSeen,
-						].filter(Boolean);
-						node.querySelector("[data-row-meta]").textContent =
-							metaParts.join(" • ") || session.ip || "Recently active";
+						const isCurrent =
+							session.current === true ||
+							(currentSessionId && session.id === currentSessionId);
 						const action = node.querySelector("[data-row-action]");
-						if (session.current) {
-							action.textContent = "This device";
-							action.disabled = true;
+						const metaParts = [];
+						if (isCurrent) {
+							metaParts.push("This device");
+						} else if (session.platform) {
+							metaParts.push(session.platform);
+						}
+						if (session.location) metaParts.push(session.location);
+						if (session.lastSeen) metaParts.push(session.lastSeen);
+						metaEl.textContent =
+							metaParts.join(" • ") || session.ip || "Recently active";
+						if (isCurrent) {
+							const badge = document.createElement("span");
+							badge.className = "pill pill-current";
+							badge.textContent = "Current";
+							titleEl.appendChild(badge);
+							action.remove();
 							node.classList.add("session-current");
 						} else {
 							action.dataset.sessionId = session.id;
@@ -860,37 +994,95 @@
 
 				function updateAvatar(url, fallback) {
 					if (!avatarEl) return;
-					const resolved = resolveAvatarUrl(url);
-					if (resolved) {
-						avatarEl.style.backgroundImage = `url("${resolved}")`;
-						avatarEl.classList.add("has-image");
-						avatarEl.textContent = "";
-					} else {
-						avatarEl.style.backgroundImage = "none";
-						avatarEl.classList.remove("has-image");
-						const initials = (fallback || "FixCraft")
-							.split(/\s+/)
-							.filter(Boolean)
-							.slice(0, 2)
-							.map((part) => part[0]?.toUpperCase())
-							.join("");
-						avatarEl.textContent = initials || "FC";
+					const requestId = ++avatarLoadId;
+					clearAvatarObjectUrl();
+					if (!url) {
+						renderAvatarInitials(fallback);
+						return;
+					}
+					resolveAvatarSource(url)
+						.then((resolved) => {
+							if (requestId !== avatarLoadId) return;
+							if (resolved) {
+								avatarEl.style.backgroundImage = `url("${resolved}")`;
+								avatarEl.classList.add("has-image");
+								avatarEl.textContent = "";
+							} else {
+								renderAvatarInitials(fallback);
+							}
+						})
+						.catch(() => {
+							if (requestId !== avatarLoadId) return;
+							renderAvatarInitials(fallback);
+						});
+				}
+
+				function clearAvatarObjectUrl() {
+					if (avatarObjectUrl) {
+						try {
+							URL.revokeObjectURL(avatarObjectUrl);
+						} catch {
+							// ignore
+						}
+						avatarObjectUrl = null;
 					}
 				}
 
-				function resolveAvatarUrl(value) {
+				function renderAvatarInitials(fallback) {
+					avatarEl.style.backgroundImage = "none";
+					avatarEl.classList.remove("has-image");
+					const initials = (fallback || "FixCraft")
+						.split(/\s+/)
+						.filter(Boolean)
+						.slice(0, 2)
+						.map((part) => part[0]?.toUpperCase())
+						.join("");
+					avatarEl.textContent = initials || "FC";
+				}
+
+				async function resolveAvatarSource(value) {
 					if (!value) return null;
-					if (/^https?:\/\//i.test(value)) {
+					if (/^data:/i.test(value) || value.startsWith("blob:")) {
 						return value;
 					}
+					const apiOrigin = getApiOrigin();
 					try {
-						const base = new URL(API_BASE);
-						const path = value.startsWith("/")
-							? value
-							: `/${value.replace(/^\//, "")}`;
-						return `${base.origin}${path}`;
-					} catch {
+						const target = new URL(value);
+						if (apiOrigin && target.origin === apiOrigin) {
+							return fetchProtectedAsset(
+								`${target.pathname}${target.search || ""}`,
+							);
+						}
 						return value;
+					} catch {
+						// ignore and treat as API-relative path
+					}
+					const normalized = value.startsWith("/")
+						? value
+						: `/${value.replace(/^\//, "")}`;
+					return fetchProtectedAsset(normalized);
+				}
+
+				function getApiOrigin() {
+					try {
+						return new URL(API_BASE).origin;
+					} catch {
+						return null;
+					}
+				}
+
+				async function fetchProtectedAsset(path) {
+					try {
+						const response = await apiFetch(path, {
+							raw: true,
+							headers: { Accept: "image/*" },
+						});
+						const blob = await response.blob();
+						clearAvatarObjectUrl();
+						avatarObjectUrl = URL.createObjectURL(blob);
+						return avatarObjectUrl;
+					} catch {
+						return null;
 					}
 				}
 
@@ -986,6 +1178,11 @@
 					apiRequest(`/api/sessions/${id}`, { method: "DELETE" })
 						.then(() => {
 							showAlert("Session revoked.", "success", true);
+							if (state.sessionId && state.sessionId === id) {
+								persistSessionId(null);
+								ensureSessionId();
+								scheduleSessionHeartbeat();
+							}
 							fetchProfile();
 						})
 						.catch((error) => {
