@@ -74,8 +74,8 @@ body.show-auth {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: clamp(1rem, 2.5vw, 2rem);
-	padding: clamp(1.5rem, 3vw, 2.5rem);
+	gap: clamp(1rem, 2vw, 1.75rem);
+	padding: clamp(1.25rem, 2.5vw, 2.25rem);
 	background: var(--fc-card-strong);
 	border: 1px solid var(--fc-border);
 	border-radius: 28px;
@@ -95,15 +95,15 @@ body.show-auth {
 
 .hero-meta {
 	display: flex;
-	align-items: center;
-	gap: 1.5rem;
+	align-items: flex-start;
+	gap: 1.75rem;
 	flex: 1;
 	min-width: 260px;
 }
 
 .avatar {
-	width: clamp(76px, 10vw, 96px);
-	height: clamp(76px, 10vw, 96px);
+	width: clamp(86px, 12vw, 108px);
+	height: clamp(86px, 12vw, 108px);
 	border-radius: 28px;
 	background: linear-gradient(145deg, #111426, #0b0f1b);
 	border: 1px solid var(--fc-border-strong);
@@ -208,8 +208,9 @@ body.show-auth {
 .hero-actions {
 	display: flex;
 	align-items: center;
-	gap: 0.85rem;
+	gap: 0.75rem;
 	flex-wrap: wrap;
+	align-self: flex-start;
 }
 
 .hero-actions .btn {
@@ -269,6 +270,23 @@ body.show-auth {
 .btn.ghost:hover {
 	background: rgba(255, 255, 255, 0.16);
 	border-color: rgba(255, 255, 255, 0.08);
+}
+
+.btn.danger {
+	background: linear-gradient(120deg, #ef4444, #fb7185);
+	color: #0a0505;
+	border-color: rgba(239, 68, 68, 0.25);
+	font-weight: 700;
+}
+
+.btn.danger:hover {
+	filter: brightness(1.05);
+	box-shadow: 0 12px 26px rgba(239, 68, 68, 0.25);
+}
+
+.btn.danger.armed {
+	background: linear-gradient(120deg, #b91c1c, #ef4444);
+	color: #ffe4e6;
 }
 
 .btn.small {
@@ -434,15 +452,17 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 }
 
 .fc-switch {
-	--switch-width: 68px;
-	--switch-height: 34px;
-	--switch-padding: 4px;
+	--switch-width: 78px;
+	--switch-height: 38px;
+	--switch-padding: 5px;
 	position: relative;
 	display: inline-flex;
 	align-items: center;
 	width: var(--switch-width);
 	height: var(--switch-height);
 	cursor: pointer;
+	user-select: none;
+	touch-action: pan-x;
 }
 
 .fc-switch input {
@@ -464,6 +484,7 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 	transition: background 0.2s ease, box-shadow 0.2s ease;
 	display: block;
 	overflow: hidden;
+	pointer-events: none;
 }
 
 .fc-switch span::after {
@@ -561,32 +582,32 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 	font-size: 0.9rem;
 }
 
-.session-row .pill {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0.2rem 0.65rem;
-	margin-left: 0.5rem;
-	border-radius: 999px;
-	font-size: 0.8rem;
-	border: 1px solid var(--fc-border);
-	background: rgba(255, 255, 255, 0.04);
-	color: var(--fc-muted);
-}
-
-.session-row .pill-current {
-	border-color: rgba(34, 211, 238, 0.5);
-	background: rgba(34, 211, 238, 0.12);
-	color: #b8f3ff;
-}
-
 .session-row.session-current {
 	border-color: rgba(34, 211, 238, 0.4);
 }
 
+.session-row .btn.current-device {
+	pointer-events: none;
+	cursor: default;
+	border-color: rgba(34, 211, 238, 0.6);
+	color: #b8f3ff;
+	background: rgba(34, 211, 238, 0.12);
+	box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25);
+	transform: none;
+}
+
+.session-row .btn.current-device:hover {
+	transform: none;
+}
+
 .session-row.session-current button {
-	opacity: 0.5;
+	opacity: 0.6;
 	cursor: not-allowed;
+}
+
+.session-row.session-current .btn.current-device {
+	opacity: 1;
+	cursor: default;
 }
 
 .session-empty {

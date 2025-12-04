@@ -41,4 +41,23 @@
 	window.addEventListener("focus", () => {
 		syncFromServer();
 	});
+	window.addEventListener("fixcraft-account:signout", () => {
+		try {
+			localStorage.removeItem("fixcraft-account");
+		} catch {
+			// ignore storage errors
+		}
+		if (window.caches?.keys) {
+			caches
+				.keys()
+				.then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+				.catch(() => {});
+		}
+		if (navigator.serviceWorker?.getRegistrations) {
+			navigator.serviceWorker
+				.getRegistrations()
+				.then((regs) => regs.forEach((reg) => reg.unregister()))
+				.catch(() => {});
+		}
+	});
 })();

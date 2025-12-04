@@ -33,10 +33,9 @@
 					<button class="btn ghost" data-action="refresh" data-when="linked">
 						Sync status
 					</button>
-					<button class="btn ghost" data-action="unlink" data-when="linked">
+					<button class="btn danger" data-action="unlink" data-when="linked">
 						Sign out
 					</button>
-					<button class="btn primary" data-action="open-portal">FixCraft Portal</button>
 				</div>
 			</header>
 			<p class="link-hint" data-link-hint>
@@ -135,9 +134,6 @@
 							<p class="eyebrow">Profile</p>
 							<h2>Contact preferences</h2>
 						</div>
-						<button class="btn ghost small" data-action="unlink">
-							Sign out
-						</button>
 					</header>
 					<form data-form="profile">
 						<label>
@@ -312,6 +308,7 @@
 				const toggles = Array.from(document.querySelectorAll("[data-pref]"));
 				const tokenHint = document.querySelector("[data-token-hint]");
 				const avatarFileInput = document.querySelector("[data-avatar-file]");
+				const signOutButton = document.querySelector('[data-action="unlink"]');
 				const stats = {
 					plan: document.querySelector("[data-stat-plan]"),
 					location: document.querySelector("[data-stat-location]"),
@@ -381,6 +378,8 @@
 				let avatarObjectUrl = null;
 				let avatarLoadId = 0;
 				let sessionHeartbeatTimer = null;
+				let signOutArmed = false;
+				let signOutConfirmTimer = null;
 				document.body.dataset.accountLinked = state.account ? "true" : "false";
 				document.body.dataset.desktop = desktop ? "true" : "false";
 				stats.platform.textContent = state.environment;
@@ -941,9 +940,7 @@
 							(currentSessionId && session.id === currentSessionId);
 						const action = node.querySelector("[data-row-action]");
 						const metaParts = [];
-						if (isCurrent) {
-							metaParts.push("This device");
-						} else if (session.platform) {
+						if (session.platform) {
 							metaParts.push(session.platform);
 						}
 						if (session.location) metaParts.push(session.location);
@@ -951,11 +948,9 @@
 						metaEl.textContent =
 							metaParts.join(" • ") || session.ip || "Recently active";
 						if (isCurrent) {
-							const badge = document.createElement("span");
-							badge.className = "pill pill-current";
-							badge.textContent = "Current";
-							titleEl.appendChild(badge);
-							action.remove();
+							action.textContent = "This device";
+							action.disabled = true;
+							action.classList.add("current-device");
 							node.classList.add("session-current");
 						} else {
 							action.dataset.sessionId = session.id;
@@ -1136,9 +1131,6 @@
 								showAuthPanel();
 							}
 							break;
-						case "open-portal":
-							openPortal(portalUrl);
-							break;
 						case "change-password":
 							openPortal(`${portalUrl.replace(/\/$/, "")}/security`);
 							break;
@@ -1146,9 +1138,7 @@
 							window.open(`mailto:${supportMail}`, "_blank");
 							break;
 						case "unlink":
-							if (confirm("Sign out of FixCraft on this device?")) {
-								persistAccount(null);
-							}
+							handleSignOut(button);
 							break;
 						case "copy-token":
 							handleCopyToken();
@@ -1214,6 +1204,116 @@
 						return;
 					}
 					window.open(url, "_blank", "noreferrer");
+				}
+
+				function handleSignOut(button) {
+					if (!state.account) return;
+					const targetButton = button || signOutButton;
+					if (!signOutArmed) {
+						signOutArmed = true;
+						if (targetButton) {
+							targetButton.textContent = "Confirm sign out";
+							targetButton.classList.add("armed");
+						}
+						showAlert(
+							"Are you sure? This will clear cookies, caches, and service workers.",
+							"error",
+							true,
+						);
+						if (signOutConfirmTimer) clearTimeout(signOutConfirmTimer);
+						signOutConfirmTimer = setTimeout(resetSignOutButton, 5000);
+						return;
+					}
+					resetSignOutButton();
+					persistAccount(null, { silent: true });
+					purgeClientState();
+					showAlert("Signed out and cleared local data.", "success", true);
+				}
+
+				function resetSignOutButton() {
+					signOutArmed = false;
+					if (signOutConfirmTimer) {
+						clearTimeout(signOutConfirmTimer);
+						signOutConfirmTimer = null;
+					}
+					if (signOutButton) {
+						signOutButton.textContent = "Sign out";
+						signOutButton.classList.remove("armed");
+					}
+				}
+
+				function purgeClientState() {
+					try {
+						localStorage.removeItem("fixcraft-account");
+						localStorage.removeItem("fixcraft-session-id");
+						sessionStorage.removeItem("fixcraft-account");
+						sessionStorage.removeItem("fixcraft-session-id");
+					} catch {
+						// ignore
+					}
+					if (window.caches?.keys) {
+						caches
+							.keys()
+							.then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+							.catch(() => {});
+					}
+					if (navigator.serviceWorker?.getRegistrations) {
+						navigator.serviceWorker
+							.getRegistrations()
+							.then((regs) => regs.forEach((reg) => reg.unregister()))
+							.catch(() => {});
+					}
+					clearAllCookies();
+					dispatchSignoutEvent();
+				}
+
+				function clearAllCookies() {
+					try {
+						const cookies = document.cookie.split(";").map((c) => c.trim());
+						const domains = buildDomainList(location.hostname);
+						for (const cookie of cookies) {
+							const name = cookie.split("=")[0];
+							if (!name) continue;
+							for (const domain of domains) {
+								document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${domain}`;
+							}
+							document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+						}
+					} catch {
+						// ignore
+					}
+				}
+
+				function buildDomainList(hostname) {
+					if (!hostname) return [];
+					const parts = hostname.split(".").filter(Boolean);
+					const domains = [];
+					for (let i = 0; i < parts.length - 1; i++) {
+						domains.push(`.${parts.slice(i).join(".")}`);
+					}
+					return domains;
+				}
+
+				function dispatchSignoutEvent() {
+					try {
+						window.dispatchEvent(
+							new CustomEvent("fixcraft-account:signout", {
+								detail: { reason: "user", cleared: true },
+							}),
+						);
+					} catch {
+						// ignore
+					}
+					try {
+						if (window.top && window.top !== window) {
+							window.top.postMessage(
+								{ type: "fixcraft-account:signout", reason: "user" },
+								"*",
+							);
+						}
+					} catch {
+						// ignore
+					}
 				}
 
 				function handleCopyToken() {
@@ -1343,7 +1443,11 @@
 						return;
 					}
 					const pref = event.target.dataset.pref;
-					updateAccount({ [pref]: event.target.checked }, true);
+					const nextValue = event.target.checked;
+					updateAccount({ [pref]: nextValue }, true).catch((error) => {
+						event.target.checked = !nextValue;
+						handleApiError(error);
+					});
 				}
 
 				function updateAccount(payload, silent) {
