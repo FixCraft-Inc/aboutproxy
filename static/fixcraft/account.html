@@ -65,10 +65,6 @@
 					<h4>Last sync</h4>
 					<p data-stat-sync>Never</p>
 				</article>
-				<article>
-					<h4>API endpoint</h4>
-					<p data-stat-endpoint>https://api.fixcraft.jp</p>
-				</article>
 			</section>
 
 			<section class="grid">
@@ -295,6 +291,7 @@
 						? "http://localhost:3221"
 						: "https://api.fixcraft.jp");
 				const API_BASE = defaultApi.replace(/\/$/, "");
+				const ACCOUNT_LINK_ENDPOINT = "/fixcraft/account-link";
 				const desktop = window.top?.iridium || window.top?.anura;
 
 				const root = document.querySelector(".account-shell");
@@ -321,7 +318,6 @@
 					timezone: document.querySelector("[data-stat-timezone]"),
 					sync: document.querySelector("[data-stat-sync]"),
 					platform: document.querySelector("[data-stat-platform]"),
-					endpoint: document.querySelector("[data-stat-endpoint]"),
 				};
 
 				const PLAN_PERKS = {
@@ -381,9 +377,28 @@
 				document.body.dataset.accountLinked = state.account ? "true" : "false";
 				document.body.dataset.desktop = desktop ? "true" : "false";
 				stats.platform.textContent = state.environment;
-				stats.endpoint.textContent = API_BASE;
 				updateLinkHint();
 				syncAccountView();
+				bootstrapFromServer();
+
+				window.addEventListener("fixcraft-account:linked", (event) => {
+					const payload = event?.detail;
+					if (!payload?.token) return;
+					persistAccount(
+						{
+							token: payload.token,
+							email: payload.email,
+							username: payload.username,
+							displayName: payload.displayName,
+							plan: payload.plan,
+							lastSync: payload.updatedAt || Date.now(),
+						},
+						{ silent: true },
+					);
+					if (!state.profile) {
+						fetchProfile();
+					}
+				});
 
 				if (state.account?.token) {
 					fetchProfile();
@@ -503,6 +518,56 @@
 						desktop.platform ||
 						"Iridium";
 					return [platform, version].filter(Boolean).join(" • ");
+				}
+
+				async function bootstrapFromServer() {
+					const payload = await fetchServerLink();
+					if (!payload?.linked || !payload.token) {
+						if (!state.account) {
+							syncAccountView();
+						}
+						return;
+					}
+					const shouldPersist =
+						!state.account ||
+						state.account.token !== payload.token ||
+						(payload.updatedAt &&
+							payload.updatedAt > (state.account.lastSync || 0));
+					if (shouldPersist) {
+						persistAccount(
+							{
+								token: payload.token,
+								email: payload.email || state.account?.email,
+								username: payload.username || state.account?.username,
+								displayName:
+									payload.displayName ||
+									state.account?.displayName ||
+									payload.email ||
+									payload.username,
+								plan: payload.plan || state.account?.plan,
+								lastSync: payload.updatedAt || Date.now(),
+							},
+							{ silent: true },
+						);
+					}
+					if (!state.profile && payload.linked) {
+						fetchProfile();
+					}
+				}
+
+				async function fetchServerLink() {
+					try {
+						const response = await fetch(ACCOUNT_LINK_ENDPOINT, {
+							credentials: "include",
+						});
+						if (!response.ok) {
+							return null;
+						}
+						const data = await response.json();
+						return data;
+					} catch {
+						return null;
+					}
 				}
 
 				function syncAccountView() {
@@ -751,8 +816,9 @@
 
 				function updateAvatar(url, fallback) {
 					if (!avatarEl) return;
-					if (url) {
-						avatarEl.style.backgroundImage = `url("${url}")`;
+					const resolved = resolveAvatarUrl(url);
+					if (resolved) {
+						avatarEl.style.backgroundImage = `url("${resolved}")`;
 						avatarEl.classList.add("has-image");
 						avatarEl.textContent = "";
 					} else {
@@ -765,6 +831,22 @@
 							.map((part) => part[0]?.toUpperCase())
 							.join("");
 						avatarEl.textContent = initials || "FC";
+					}
+				}
+
+				function resolveAvatarUrl(value) {
+					if (!value) return null;
+					if (/^https?:\/\//i.test(value)) {
+						return value;
+					}
+					try {
+						const base = new URL(API_BASE);
+						const path = value.startsWith("/")
+							? value
+							: `/${value.replace(/^\//, "")}`;
+						return `${base.origin}${path}`;
+					} catch {
+						return value;
 					}
 				}
 
