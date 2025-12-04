@@ -3,161 +3,1132 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FixCraft Account Portal</title>
-    <link rel="stylesheet" href="styles.css" />
-    <script src="../build-flags.js"></script>
+		<title>FixCraft Identity Center</title>
+		<link rel="stylesheet" href="styles.css" />
+		<script src="../build-flags.js"></script>
 	</head>
 	<body>
-		<main class="fc-shell">
-			<header class="fc-hero">
-				<p class="fc-eyebrow">FixCraft Identity</p>
-				<h1>Manage your account on this device</h1>
-				<p class="fc-intro">
-					IridiumOS keeps everything local, but certain enterprise features can link
-					your session with a FixCraft ID. Use this dashboard to review the current
-					status, reconnect, or open the external FixCraft portal.
-				</p>
+		<div class="fc-backdrop" aria-hidden="true"></div>
+		<main class="account-shell" data-view="loading">
+			<header class="account-hero">
+				<div class="hero-meta">
+					<div class="avatar" data-avatar aria-label="Account avatar">FC</div>
+					<div>
+						<p class="status-chip status-chip--warn" data-status-chip>
+							Checking FixCraft status…
+						</p>
+						<h1 data-hero-name>FixCraft Identity</h1>
+						<p class="hero-email" data-hero-email>
+							Manage your FixCraft account on this device.
+						</p>
+						<div class="hero-plan" data-plan-badge data-tier="free">
+							Plan unknown
+						</div>
+					</div>
+				</div>
+				<div class="hero-actions">
+					<button class="btn outline" data-action="open-auth" data-when="unlinked">
+						Link FixCraft ID
+					</button>
+					<button class="btn ghost" data-action="refresh" data-when="linked">
+						Sync status
+					</button>
+					<button class="btn ghost" data-action="unlink" data-when="linked">
+						Sign out
+					</button>
+					<button class="btn primary" data-action="open-portal">FixCraft Portal</button>
+				</div>
 			</header>
+			<p class="link-hint" data-link-hint>
+				We’ll show your workspace once you’re signed in.
+			</p>
+			<section class="alert-banner" data-alert></section>
 
-			<section class="fc-card fc-card--status">
-				<div>
-					<h2>Device status</h2>
-					<p data-fc-status>
-						Checking for a linked account on this session...
-					</p>
-				</div>
-				<dl class="fc-meta">
-					<div>
-						<dt>Iridium build</dt>
-						<dd data-iridium-version>Unknown</dd>
-					</div>
-					<div>
-						<dt>Platform</dt>
-						<dd data-iridium-platform>Unavailable</dd>
-					</div>
-				</dl>
-				<div class="fc-actions">
-					<button data-action="connect" class="primary">Link FixCraft ID</button>
-					<button data-action="refresh">Sync status</button>
-				</div>
+			<section class="quick-stats">
+				<article>
+					<h4>Plan</h4>
+					<p data-stat-plan>—</p>
+				</article>
+				<article>
+					<h4>Environment</h4>
+					<p data-stat-platform>Detecting…</p>
+				</article>
+				<article>
+					<h4>Location</h4>
+					<p data-stat-location>—</p>
+				</article>
+				<article>
+					<h4>Timezone</h4>
+					<p data-stat-timezone>—</p>
+				</article>
+				<article>
+					<h4>Last sync</h4>
+					<p data-stat-sync>Never</p>
+				</article>
+				<article>
+					<h4>API endpoint</h4>
+					<p data-stat-endpoint>https://api.fixcraft.jp</p>
+				</article>
 			</section>
 
-			<section class="fc-grid">
-				<article class="fc-card">
-					<h3>Why link an account?</h3>
-					<ul>
-						<li>Sync enterprise policies delivered through FixCraft Portal.</li>
-						<li>Unlock remote debugging and secure profile migration.</li>
-						<li>Register this device for organization‑wide compliance checks.</li>
+			<section class="grid">
+				<article class="card security-card">
+					<header>
+						<div>
+							<p class="eyebrow">Security</p>
+							<h2>Protection controls</h2>
+						</div>
+						<button class="btn ghost small" data-action="change-password">
+							Change password
+						</button>
+					</header>
+					<div class="switch-row">
+						<div>
+							<strong>Two-factor authentication</strong>
+							<p>
+								Add an extra verification step for every sign-in attempt.
+							</p>
+						</div>
+						<label class="fc-switch">
+							<input type="checkbox" data-pref="twoFactorEnabled" />
+							<span></span>
+						</label>
+					</div>
+					<div class="switch-row">
+						<div>
+							<strong>Login alerts</strong>
+							<p>Receive alerts whenever a new device is registered.</p>
+						</div>
+						<label class="fc-switch">
+							<input type="checkbox" data-pref="loginAlerts" />
+							<span></span>
+						</label>
+					</div>
+					<div class="token-box">
+						<div>
+							<strong>Bearer token</strong>
+							<p class="token-hint" data-token-hint>Hidden for safety.</p>
+						</div>
+						<div class="token-actions">
+							<button class="btn ghost small" data-action="copy-token">Copy</button>
+							<button class="btn ghost small" data-action="show-token">Reveal</button>
+						</div>
+					</div>
+				</article>
+
+				<article class="card sessions-card">
+					<header>
+						<div>
+							<p class="eyebrow">Sessions</p>
+							<h2>Active devices</h2>
+						</div>
+						<button class="btn ghost small" data-action="refresh">
+							Refresh
+						</button>
+					</header>
+					<ul class="session-list" data-session-list>
+						<li class="session-empty">
+							Link your account to see enrolled devices.
+						</li>
 					</ul>
 				</article>
-				<article class="fc-card">
-					<h3>Privacy first</h3>
-					<p>
-						Your files and settings stay within the browser sandbox. Linking an
-						account only exchanges the identifier needed for FixCraft services; no
-						telemetry is uploaded from this view.
-					</p>
-					<p>
-						Need more details? Review the
-						<a href="https://www.fixcraft.org/terms-privacy" target="_blank" rel="noreferrer noopener">FixCraft privacy statement</a>.
-					</p>
+
+				<article class="card profile-card">
+					<header>
+						<div>
+							<p class="eyebrow">Profile</p>
+							<h2>Contact preferences</h2>
+						</div>
+						<button class="btn ghost small" data-action="unlink">
+							Sign out
+						</button>
+					</header>
+					<form data-form="profile">
+						<label>
+							Full name
+							<input name="fullName" type="text" autocomplete="name" />
+						</label>
+						<label>
+							Primary email
+							<input name="email" type="email" autocomplete="email" />
+						</label>
+						<label>
+							Backup email
+							<input name="backupEmail" type="email" autocomplete="email" />
+						</label>
+						<label>
+							Location
+							<input name="location" type="text" placeholder="City, region" />
+						</label>
+						<label>
+							Timezone
+							<input name="timezone" type="text" placeholder="UTC" />
+						</label>
+						<div class="form-row">
+							<label>
+								Avatar URL
+								<input
+									name="avatarUrl"
+									type="url"
+									placeholder="https://cdn.fixcraft.jp/avatar.jpg"
+								/>
+							</label>
+							<button
+								class="btn outline small"
+								type="button"
+								data-action="save-avatar"
+							>
+								Update avatar
+							</button>
+						</div>
+						<div class="form-actions">
+							<button class="btn primary" type="submit">Save changes</button>
+							<button
+								class="btn ghost"
+								type="button"
+								data-action="reset-profile"
+							>
+								Reset
+							</button>
+						</div>
+					</form>
+					<div class="upload-row">
+						<label class="upload">
+							<input type="file" accept="image/*" data-avatar-file />
+							<span>Upload avatar image</span>
+						</label>
+					</div>
+				</article>
+
+				<article class="card perks-card">
+					<header>
+						<div>
+							<p class="eyebrow">Perks</p>
+							<h2>Included with your plan</h2>
+						</div>
+					</header>
+					<ul class="perks-grid" data-perk-list>
+						<li>Link your FixCraft ID to surface workspace perks.</li>
+					</ul>
+					<div class="perk-actions">
+						<button class="btn primary" data-action="open-portal">
+							Manage subscription
+						</button>
+						<button class="btn outline" data-action="support">
+							Contact support
+						</button>
+					</div>
 				</article>
 			</section>
-
-			<section class="fc-card fc-card--portal">
-				<div>
-					<h3>Open the FixCraft Portal</h3>
-					<p>
-						To change your password, manage subscriptions, or revoke device access,
-						continue in the official FixCraft Portal.
-					</p>
-				</div>
-				<button data-action="open-portal">Launch portal</button>
-			</section>
-
-			<footer class="fc-footer">
-				<span>© <span data-year></span> FixCraft®</span>
-				<span>All rights reserved.</span>
-			</footer>
 		</main>
 
-    <script>
-      (() => {
-        const buildFlags =
-          window.top?.AboutBrowserBuildFlags ||
-          window.AboutBrowserBuildFlags ||
-          {};
-        if (buildFlags.disableAccountPortal) {
-          document.body.innerHTML = `
-            <main class="fc-shell">
-              <header class="fc-hero">
-                <p class="fc-eyebrow">FixCraft Identity</p>
-                <h1>Account controls disabled</h1>
-                <p class="fc-intro">
-                  This build runs from a read-only GitHub Pages deployment, so the FixCraft account portal is unavailable.
-                </p>
-              </header>
-              <section class="fc-card">
-                <p>
-                  Download a self-hosted release or run the official server toolkit to enable account linking,
-                  namespaces, WireGuard, and other features that require privileged components.
-                </p>
-              </section>
-            </main>`;
-          return;
-        }
-        const desktop = window.top?.iridium || window.top?.anura;
-        const accountStatus = document.querySelector('[data-fc-status]');
-				const versionEl = document.querySelector('[data-iridium-version]');
-				const platformEl = document.querySelector('[data-iridium-platform]');
-				const yearEl = document.querySelector('[data-year]');
-				yearEl.textContent = new Date().getFullYear();
+		<aside class="auth-panel" data-auth-panel hidden>
+			<form class="auth-card" data-form="signin">
+				<button
+					type="button"
+					class="close"
+					data-action="close-auth"
+					aria-label="Close sign-in dialog"
+				>
+					×
+				</button>
+				<p class="eyebrow">FixCraft ID</p>
+				<h2>Sign in to continue</h2>
+				<p class="auth-intro">
+					Use your FixCraft username or email along with your password to link
+					this session.
+				</p>
+				<label>
+					Email or username
+					<input name="username" type="text" autocomplete="username" required />
+				</label>
+				<label>
+					Password
+					<input
+						name="password"
+						type="password"
+						autocomplete="current-password"
+						required
+					/>
+				</label>
+				<button class="btn primary" type="submit">Sign in</button>
+				<p class="auth-hint" data-auth-message>
+					Need help? security@fixcraft.jp
+				</p>
+			</form>
+		</aside>
 
-				const renderStatus = () => {
-					if (!desktop) {
-						accountStatus.textContent =
-							"This Iridium session is offline or running outside the desktop shell.";
-						versionEl.textContent = "Unavailable";
-						platformEl.textContent = "Browser only";
-						return;
-					}
+		<template id="session-row">
+			<li class="session-row">
+				<div>
+					<strong data-row-title></strong>
+					<p data-row-meta></p>
+				</div>
+				<button class="btn ghost small" data-row-action>Revoke</button>
+			</li>
+		</template>
 
-					const version = desktop.version?.pretty || "Custom build";
-					const codename = desktop.version?.codename;
-					versionEl.textContent = codename ? `${version} (${codename})` : version;
-					platformEl.textContent = desktop.platform?.type || "Unknown";
+		<script>
+			(() => {
+				const buildFlags =
+					window.top?.AboutBrowserBuildFlags ||
+					window.AboutBrowserBuildFlags ||
+					{};
 
-					const linked = desktop.settings?.get("fixcraft-account");
-					if (linked?.id || linked?.email) {
-						const identity = linked.email || linked.id;
-						accountStatus.textContent = `Linked to ${identity}`;
-					} else {
-						accountStatus.textContent =
-							"No FixCraft ID is currently linked to this profile.";
-					}
+				if (buildFlags.disableAccountPortal) {
+					document.body.innerHTML = `
+            <main class="account-shell account-shell--disabled">
+              <h1>Account controls unavailable</h1>
+              <p>This static build cannot access the FixCraft API. Deploy the official IridiumOS stack to manage identities.</p>
+            </main>
+          `;
+					return;
+				}
+
+				const portalUrl =
+					buildFlags.fixcraftPortal || "https://fixcraft.org/account";
+				const supportMail =
+					buildFlags.fixcraftSupport || "security@fixcraft.jp";
+				const defaultApi =
+					buildFlags.fixcraftApiBase ||
+					(window.location.hostname === "localhost"
+						? "http://localhost:3221"
+						: "https://api.fixcraft.jp");
+				const API_BASE = defaultApi.replace(/\/$/, "");
+				const desktop = window.top?.iridium || window.top?.anura;
+
+				const root = document.querySelector(".account-shell");
+				const avatarEl = document.querySelector("[data-avatar]");
+				const heroName = document.querySelector("[data-hero-name]");
+				const heroEmail = document.querySelector("[data-hero-email]");
+				const planBadge = document.querySelector("[data-plan-badge]");
+				const statusChip = document.querySelector("[data-status-chip]");
+				const linkHint = document.querySelector("[data-link-hint]");
+				const alertBanner = document.querySelector("[data-alert]");
+				const perkList = document.querySelector("[data-perk-list]");
+				const sessionList = document.querySelector("[data-session-list]");
+				const sessionTemplate = document.getElementById("session-row");
+				const profileForm = document.querySelector('[data-form="profile"]');
+				const loginForm = document.querySelector('[data-form="signin"]');
+				const authPanel = document.querySelector("[data-auth-panel]");
+				const authMessage = document.querySelector("[data-auth-message]");
+				const toggles = Array.from(document.querySelectorAll("[data-pref]"));
+				const tokenHint = document.querySelector("[data-token-hint]");
+				const avatarFileInput = document.querySelector("[data-avatar-file]");
+				const stats = {
+					plan: document.querySelector("[data-stat-plan]"),
+					location: document.querySelector("[data-stat-location]"),
+					timezone: document.querySelector("[data-stat-timezone]"),
+					sync: document.querySelector("[data-stat-sync]"),
+					platform: document.querySelector("[data-stat-platform]"),
+					endpoint: document.querySelector("[data-stat-endpoint]"),
 				};
 
-				const openPortal = () => {
-					const url = "https://fixcraft.org/account";
-					if (desktop?.uri) {
+				const PLAN_PERKS = {
+					free: [
+						{
+							title: "Local Iridium workspace",
+							body: "Customize wallpapers, layouts, and offline apps.",
+						},
+						{
+							title: "Manual downloads",
+							body: "Fetch open-source builds from public mirrors.",
+						},
+						{
+							title: "Device sandbox",
+							body: "Keep FixCraft data scoped to this browser profile.",
+						},
+					],
+					premium: [
+						{
+							title: "FixCraft VPN mesh",
+							body: "Private WireGuard profiles delivered via FixCraft One.",
+						},
+						{
+							title: "Priority modules",
+							body: "Unlock premium x86 images & rapid updates.",
+						},
+						{
+							title: "Linked notifications",
+							body: "Receive device alerts and runbooks across fleets.",
+						},
+					],
+					admin: [
+						{
+							title: "Global policy sync",
+							body: "Push compliance baselines and cert pinning at scale.",
+						},
+						{
+							title: "Runbook automation",
+							body: "Dispatch scripts, revoke devices, and stage rollbacks.",
+						},
+						{
+							title: "24/7 FixCraft support",
+							body: "Direct line to core engineers with elevated SLAs.",
+						},
+					],
+				};
+
+				const state = {
+					account: readAccount(),
+					profile: null,
+					sessions: [],
+					environment: describeEnvironment(),
+					loading: false,
+				};
+
+				let revealTimer = null;
+				document.body.dataset.accountLinked = state.account ? "true" : "false";
+				document.body.dataset.desktop = desktop ? "true" : "false";
+				stats.platform.textContent = state.environment;
+				stats.endpoint.textContent = API_BASE;
+				updateLinkHint();
+				syncAccountView();
+
+				if (state.account?.token) {
+					fetchProfile();
+				} else {
+					root.dataset.view = "empty";
+				}
+
+				document.body.addEventListener("click", handleActionClick);
+				sessionList?.addEventListener("click", handleSessionClick);
+				loginForm?.addEventListener("submit", handleLoginSubmit);
+				profileForm?.addEventListener("submit", handleProfileSubmit);
+				toggles.forEach((input) =>
+					input.addEventListener("change", handlePrefToggle),
+				);
+				avatarFileInput?.addEventListener("change", handleAvatarUpload);
+
+				function readAccount() {
+					const fromSettings = safeReadSetting();
+					if (fromSettings) {
+						return { ...fromSettings };
+					}
+					try {
+						const raw = localStorage.getItem("fixcraft-account");
+						return raw ? JSON.parse(raw) : null;
+					} catch {
+						return null;
+					}
+				}
+
+				function safeReadSetting() {
+					try {
+						const raw =
+							desktop?.settings?.get?.("fixcraft-account") ?? null;
+						if (!raw) return null;
+						if (typeof raw === "string") {
+							return JSON.parse(raw);
+						}
+						return raw;
+					} catch {
+						return null;
+					}
+				}
+
+				function safePersistSetting(value) {
+					try {
+						const result = desktop?.settings?.set?.(
+							"fixcraft-account",
+							value,
+						);
+						if (result?.then) {
+							result.catch(() => {});
+						}
+					} catch {
+						// noop
+					}
+				}
+
+				function persistAccount(value, opts = {}) {
+					if (!value) {
+						try {
+							localStorage.removeItem("fixcraft-account");
+						} catch {
+							// noop
+						}
+						safePersistSetting(null);
+						state.account = null;
+						state.profile = null;
+						state.sessions = [];
+						document.body.dataset.accountLinked = "false";
+						updateLinkHint();
+						syncAccountView();
+						if (!opts.silent) {
+							showAlert("Signed out of FixCraft.", "success");
+						}
+						return;
+					}
+					const payload = {
+						token: value.token,
+						email: value.email || value.user?.email || null,
+						username: value.username || value.user?.username || null,
+						displayName:
+							value.displayName ||
+							value.fullName ||
+							value.user?.displayName ||
+							value.user?.username ||
+							null,
+						plan: value.plan || value.user?.tier || null,
+						lastSync: value.lastSync || Date.now(),
+					};
+					safePersistSetting(payload);
+					try {
+						localStorage.setItem(
+							"fixcraft-account",
+							JSON.stringify(payload),
+						);
+					} catch {
+						// noop
+					}
+					state.account = payload;
+					document.body.dataset.accountLinked = "true";
+					updateLinkHint();
+					syncAccountView();
+					if (!opts.silent) {
+						showAlert("Linked to FixCraft.", "success");
+					}
+				}
+
+				function describeEnvironment() {
+					if (!desktop) {
+						return "Browser sandbox";
+					}
+					const version =
+						desktop.version?.pretty || desktop.version?.codename || "";
+					const platform =
+						desktop.platform?.label ||
+						desktop.platform?.type ||
+						desktop.platform ||
+						"Iridium";
+					return [platform, version].filter(Boolean).join(" • ");
+				}
+
+				function syncAccountView() {
+					const linked = Boolean(state.account);
+					const profileReady = Boolean(state.profile);
+					if (!linked) {
+						root.dataset.view = "empty";
+						statusChip.textContent = "No account linked";
+						statusChip.className = "status-chip status-chip--warn";
+						heroName.textContent = "FixCraft Identity";
+						heroEmail.textContent =
+							"Link your FixCraft ID to sync premium resources.";
+						planBadge.textContent = "Not linked";
+						planBadge.dataset.tier = "free";
+						perkList.innerHTML =
+							"<li>Sign in to surface plan-specific benefits.</li>";
+						sessionList.innerHTML =
+							'<li class="session-empty">Link your account to see active sessions.</li>';
+						stats.plan.textContent = "Unlinked";
+					} else if (!profileReady) {
+						root.dataset.view = "loading";
+						statusChip.textContent = "Syncing FixCraft profile…";
+						statusChip.className = "status-chip status-chip--sync";
+					} else {
+						root.dataset.view = "ready";
+						statusChip.textContent = "FixCraft ID linked";
+						statusChip.className = "status-chip status-chip--ready";
+					}
+					stats.sync.textContent = formatSyncTime(state.account?.lastSync);
+				}
+
+				function updateLinkHint() {
+					if (!linkHint) return;
+					if (!state.account) {
+						linkHint.textContent =
+							"Link your FixCraft ID to unlock VPN meshes, remote policies, and premium downloads.";
+						return;
+					}
+					if (!desktop) {
+						linkHint.textContent =
+							"Running outside of Iridium — your token lives only in this browser.";
+						return;
+					}
+					linkHint.textContent = `Signed in as ${
+						state.account.displayName || state.account.email || "FixCraft user"
+					}.`;
+				}
+
+				async function fetchProfile() {
+					if (!state.account?.token) {
+						return;
+					}
+					root.dataset.view = "loading";
+					statusChip.textContent = "Syncing FixCraft profile…";
+					statusChip.className = "status-chip status-chip--sync";
+					try {
+						const [profile, sessions] = await Promise.all([
+							apiRequest("/api/user"),
+							apiRequest("/api/sessions"),
+						]);
+						state.profile = profile;
+						state.sessions = Array.isArray(sessions) ? sessions : [];
+						persistAccount(
+							{
+								...state.account,
+								email: profile.email,
+								displayName: profile.fullName || profile.email,
+								plan: profile.plan,
+								lastSync: Date.now(),
+							},
+							{ silent: true },
+						);
+						renderProfile();
+						renderSessions();
+						renderPerks();
+						root.dataset.view = "ready";
+						statusChip.textContent = "FixCraft ID linked";
+						statusChip.className = "status-chip status-chip--ready";
+						showAlert("Account synced.", "success", true);
+					} catch (error) {
+						handleApiError(error);
+					}
+				}
+
+				async function apiRequest(path, options = {}) {
+					if (!state.account?.token) {
+						throw new Error("missing_token");
+					}
+					const url = buildApiUrl(path);
+					const fetchOptions = {
+						method: options.method || "GET",
+						headers: {
+							Accept: "application/json",
+							...(options.headers || {}),
+						},
+					};
+					if (options.body) {
+						fetchOptions.body =
+							typeof options.body === "string"
+								? options.body
+								: JSON.stringify(options.body);
+						if (!fetchOptions.headers["Content-Type"]) {
+							fetchOptions.headers["Content-Type"] = "application/json";
+						}
+					}
+					fetchOptions.headers.Authorization = `Bearer ${state.account.token}`;
+					const response = await fetch(url, fetchOptions);
+					const text = await response.text();
+					const data = text ? JSON.parse(text) : null;
+					if (!response.ok) {
+						const message =
+							data?.error ||
+							data?.message ||
+							`Request failed (${response.status})`;
+						const err = new Error(message);
+						err.status = response.status;
+						throw err;
+					}
+					return data;
+				}
+
+				function buildApiUrl(path) {
+					if (!path) return API_BASE;
+					if (path.startsWith("http")) return path;
+					return `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+				}
+
+				function renderProfile() {
+					 if (!state.profile) return;
+					const profile = state.profile;
+					const plan = profile.plan || state.account?.plan || "FixCraft Free";
+					const tier = determineTier(plan, profile.role);
+					heroName.textContent =
+						profile.fullName ||
+						profile.displayName ||
+						state.account?.displayName ||
+						"FixCraft member";
+					heroEmail.textContent =
+						profile.email ||
+						state.account?.email ||
+						"Linked to FixCraft workspace.";
+					planBadge.textContent = plan;
+					planBadge.dataset.tier = tier;
+					stats.plan.textContent = `${plan}${
+						profile.role ? ` • ${profile.role}` : ""
+					}`;
+					stats.location.textContent =
+						profile.location || "Add your location";
+					stats.timezone.textContent =
+						profile.timezone || "Set your timezone";
+					stats.sync.textContent = formatSyncTime(state.account?.lastSync);
+					updateTokenHint();
+					updateAvatar(profile.avatarUrl, profile.fullName || profile.email);
+					fillProfileForm();
+					toggles.forEach((input) => {
+						const pref = input.dataset.pref;
+						if (typeof profile[pref] !== "undefined") {
+							input.checked = Boolean(profile[pref]);
+						}
+					});
+				}
+
+				function fillProfileForm() {
+					if (!profileForm || !state.profile) return;
+					const profile = state.profile;
+					const map = {
+						fullName: profile.fullName || "",
+						email: profile.email || "",
+						backupEmail: profile.backupEmail || "",
+						location: profile.location || "",
+						timezone: profile.timezone || "",
+						avatarUrl: profile.avatarUrl || "",
+					};
+					Object.entries(map).forEach(([key, value]) => {
+						if (profileForm.elements[key]) {
+							profileForm.elements[key].value = value || "";
+						}
+					});
+				}
+
+				function renderSessions() {
+					if (!sessionList) return;
+					sessionList.innerHTML = "";
+					const list = Array.isArray(state.sessions) ? state.sessions : [];
+					if (!state.profile) {
+						sessionList.innerHTML =
+							'<li class="session-empty">Link your account to see active sessions.</li>';
+						return;
+					}
+					if (list.length === 0) {
+						sessionList.innerHTML =
+							'<li class="session-empty">No tracked sessions yet.</li>';
+						return;
+					}
+					list.forEach((session) => {
+						const node =
+							sessionTemplate.content.firstElementChild.cloneNode(true);
+						node.querySelector("[data-row-title]").textContent =
+							session.title || session.platform || "Unnamed device";
+						const metaParts = [
+							session.platform,
+							session.location,
+							session.lastSeen,
+						].filter(Boolean);
+						node.querySelector("[data-row-meta]").textContent =
+							metaParts.join(" • ") || session.ip || "Recently active";
+						const action = node.querySelector("[data-row-action]");
+						if (session.current) {
+							action.textContent = "This device";
+							action.disabled = true;
+							node.classList.add("session-current");
+						} else {
+							action.dataset.sessionId = session.id;
+						}
+						sessionList.appendChild(node);
+					});
+				}
+
+				function renderPerks() {
+					if (!perkList) return;
+					const tier = determineTier(
+						state.profile?.plan || state.account?.plan,
+						state.profile?.role,
+					);
+					let perks = PLAN_PERKS.free;
+					if (tier === "premium") perks = PLAN_PERKS.premium;
+					if (tier === "admin") perks = PLAN_PERKS.admin;
+					perkList.innerHTML = perks
+						.map(
+							(perk) =>
+								`<li><strong>${perk.title}</strong><span>${perk.body}</span></li>`,
+						)
+						.join("");
+				}
+
+				function determineTier(plan = "", role = "") {
+					const lower = `${plan} ${role}`.toLowerCase();
+					if (lower.includes("admin") || lower.includes("ultimate")) {
+						return "admin";
+					}
+					if (lower.includes("pro") || lower.includes("premium")) {
+						return "premium";
+					}
+					return "free";
+				}
+
+				function updateAvatar(url, fallback) {
+					if (!avatarEl) return;
+					if (url) {
+						avatarEl.style.backgroundImage = `url("${url}")`;
+						avatarEl.classList.add("has-image");
+						avatarEl.textContent = "";
+					} else {
+						avatarEl.style.backgroundImage = "none";
+						avatarEl.classList.remove("has-image");
+						const initials = (fallback || "FixCraft")
+							.split(/\s+/)
+							.filter(Boolean)
+							.slice(0, 2)
+							.map((part) => part[0]?.toUpperCase())
+							.join("");
+						avatarEl.textContent = initials || "FC";
+					}
+				}
+
+				function updateTokenHint() {
+					if (!tokenHint) return;
+					if (!state.account?.token) {
+						tokenHint.textContent = "No token saved yet.";
+						tokenHint.dataset.visible = "false";
+						return;
+					}
+					tokenHint.textContent = obfuscateToken(state.account.token);
+					tokenHint.dataset.visible = "false";
+				}
+
+				function obfuscateToken(token) {
+					if (!token) return "••••••";
+					if (token.length <= 8) return "••••" + token.slice(-2);
+					return `••••${token.slice(-6)}`;
+				}
+
+				function formatSyncTime(ts) {
+					if (!ts) return "Never";
+					const diff = Date.now() - Number(ts);
+					if (diff < 30_000) return "Just now";
+					if (diff < 60_000) return "Moments ago";
+					const minutes = Math.floor(diff / 60000);
+					if (minutes < 60) return `${minutes}m ago`;
+					const hours = Math.floor(minutes / 60);
+					if (hours < 24) return `${hours}h ago`;
+					const days = Math.floor(hours / 24);
+					return `${days}d ago`;
+				}
+
+				function handleActionClick(event) {
+					const button = event.target.closest("[data-action]");
+					if (!button) return;
+					const action = button.dataset.action;
+					if (!action) return;
+					event.preventDefault();
+					switch (action) {
+						case "open-auth":
+							showAuthPanel();
+							break;
+						case "close-auth":
+							hideAuthPanel();
+							break;
+						case "refresh":
+							if (state.account?.token) {
+								fetchProfile();
+							} else {
+								showAuthPanel();
+							}
+							break;
+						case "open-portal":
+							openPortal(portalUrl);
+							break;
+						case "change-password":
+							openPortal(`${portalUrl.replace(/\/$/, "")}/security`);
+							break;
+						case "support":
+							window.open(`mailto:${supportMail}`, "_blank");
+							break;
+						case "unlink":
+							if (confirm("Sign out of FixCraft on this device?")) {
+								persistAccount(null);
+							}
+							break;
+						case "copy-token":
+							handleCopyToken();
+							break;
+						case "show-token":
+							revealToken();
+							break;
+						case "save-avatar":
+							handleAvatarUrlUpdate();
+							break;
+						case "reset-profile":
+							fillProfileForm();
+							showAlert("Form reset.", "success", true);
+							break;
+						default:
+							break;
+					}
+				}
+
+				function handleSessionClick(event) {
+					const button = event.target.closest("[data-session-id]");
+					if (!button) return;
+					const id = button.dataset.sessionId;
+					if (!id) return;
+					button.disabled = true;
+					button.textContent = "Removing…";
+					apiRequest(`/api/sessions/${id}`, { method: "DELETE" })
+						.then(() => {
+							showAlert("Session revoked.", "success", true);
+							fetchProfile();
+						})
+						.catch((error) => {
+							button.disabled = false;
+							button.textContent = "Revoke";
+							handleApiError(error);
+						});
+				}
+
+				function showAuthPanel() {
+					if (!authPanel) return;
+					authPanel.hidden = false;
+					document.body.classList.add("show-auth");
+					if (loginForm?.elements?.username && state.account?.email) {
+						loginForm.elements.username.value = state.account.email;
+					}
+				}
+
+				function hideAuthPanel() {
+					if (!authPanel) return;
+					authPanel.hidden = true;
+					document.body.classList.remove("show-auth");
+					loginForm?.reset();
+				}
+
+				function openPortal(url) {
+					if (desktop?.uri?.handle) {
 						desktop.uri.handle(url);
 						return;
 					}
 					window.open(url, "_blank", "noreferrer");
-				};
+				}
 
-				document
-					.querySelector('[data-action="connect"]')
-					.addEventListener('click', openPortal);
-				document
-					.querySelector('[data-action="open-portal"]')
-					.addEventListener('click', openPortal);
-				document
-					.querySelector('[data-action="refresh"]')
-					.addEventListener('click', renderStatus);
+				function handleCopyToken() {
+					if (!state.account?.token) {
+						showAlert("No token available yet.", "error");
+						return;
+					}
+					const token = state.account.token;
+					if (navigator.clipboard?.writeText) {
+						navigator.clipboard
+							.writeText(token)
+							.then(() => showAlert("Token copied.", "success", true))
+							.catch(() =>
+								showAlert("Clipboard blocked by browser.", "error"),
+							);
+					} else {
+						const textarea = document.createElement("textarea");
+						textarea.value = token;
+						document.body.appendChild(textarea);
+						textarea.select();
+						document.execCommand("copy");
+						textarea.remove();
+						showAlert("Token copied.", "success", true);
+					}
+				}
 
-				renderStatus();
+				function revealToken() {
+					if (!state.account?.token || !tokenHint) return;
+					if (revealTimer) {
+						clearTimeout(revealTimer);
+					}
+					tokenHint.dataset.visible = "true";
+					tokenHint.textContent = state.account.token;
+					revealTimer = setTimeout(() => {
+						tokenHint.dataset.visible = "false";
+						tokenHint.textContent = obfuscateToken(state.account.token);
+					}, 6000);
+				}
+
+				function handleLoginSubmit(event) {
+					event.preventDefault();
+					const formData = new FormData(loginForm);
+					const username = (formData.get("username") || "").toString().trim();
+					const password = (formData.get("password") || "").toString();
+					if (!username || !password) {
+						setAuthMessage("Please provide both username and password.", true);
+						return;
+					}
+					const submitBtn = loginForm.querySelector('button[type="submit"]');
+					if (submitBtn) {
+						submitBtn.disabled = true;
+						submitBtn.textContent = "Signing in…";
+					}
+					setAuthMessage("Signing in…", false);
+					fetch(`${API_BASE}/login`, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ username, password }),
+					})
+						.then(async (resp) => {
+							const payload = await resp.json();
+							if (!resp.ok) {
+								const err =
+									payload?.error === "invalid_credentials"
+										? "Incorrect username or password."
+										: payload?.error || "Unable to sign in.";
+								throw new Error(err);
+							}
+							persistAccount({
+								token: payload.token,
+								email: payload.user?.email,
+								username: payload.user?.username,
+								displayName:
+									payload.user?.displayName || payload.user?.username,
+								plan: payload.user?.tier,
+								lastSync: Date.now(),
+							});
+							loginForm.reset();
+							hideAuthPanel();
+							setAuthMessage("Signed in.", false);
+							fetchProfile();
+						})
+						.catch((error) => setAuthMessage(error.message, true))
+						.finally(() => {
+							if (submitBtn) {
+								submitBtn.disabled = false;
+								submitBtn.textContent = "Sign in";
+							}
+						});
+				}
+
+				function setAuthMessage(message, isError) {
+					if (!authMessage) return;
+					authMessage.textContent = message;
+					authMessage.style.color = isError ? "#ffb4c7" : "var(--fc-muted)";
+				}
+
+				function handleProfileSubmit(event) {
+					event.preventDefault();
+					if (!profileForm) return;
+					if (!state.profile) {
+						showAlert("Link your FixCraft ID first.", "error");
+						return;
+					}
+					const formData = new FormData(profileForm);
+					const payload = {};
+					["fullName", "email", "backupEmail", "location", "timezone"].forEach(
+						(key) => {
+							const value = (formData.get(key) || "").toString().trim();
+							if (value !== state.profile[key]) {
+								payload[key] = value;
+							}
+						},
+					);
+					if (!Object.keys(payload).length) {
+						showAlert("Nothing to update.", "error", true);
+						return;
+					}
+					updateAccount(payload);
+				}
+
+				function handlePrefToggle(event) {
+					if (!state.profile) {
+						event.target.checked = !event.target.checked;
+						showAlert("Link your account first.", "error");
+						return;
+					}
+					const pref = event.target.dataset.pref;
+					updateAccount({ [pref]: event.target.checked }, true);
+				}
+
+				function updateAccount(payload, silent) {
+					apiRequest("/api/user", { method: "PATCH", body: payload })
+						.then((profile) => {
+							state.profile = profile;
+							persistAccount(
+								{
+									...state.account,
+									email: profile.email,
+									displayName: profile.fullName,
+									plan: profile.plan,
+									lastSync: Date.now(),
+								},
+								{ silent: true },
+							);
+							renderProfile();
+							renderPerks();
+							if (!silent) {
+								showAlert("Changes saved.", "success", true);
+							}
+						})
+						.catch(handleApiError);
+				}
+
+				function handleAvatarUrlUpdate() {
+					if (!profileForm) return;
+					if (!state.profile) {
+						showAlert("Link your account first.", "error");
+						return;
+					}
+					const avatarInput = profileForm.elements.avatarUrl;
+					const url = (avatarInput?.value || "")
+						.toString()
+						.trim();
+					if (!url) {
+						showAlert("Enter a valid image URL first.", "error");
+						return;
+					}
+					apiRequest("/api/avatar", {
+						method: "POST",
+						body: { avatarUrl: url },
+					})
+						.then(() => {
+							showAlert("Avatar updated.", "success", true);
+							fetchProfile();
+						})
+						.catch(handleApiError);
+				}
+
+				function handleAvatarUpload(event) {
+					const file = event.target.files?.[0];
+					if (!file) return;
+					const reader = new FileReader();
+					reader.onload = () => {
+						const base64 = reader.result;
+						if (typeof base64 !== "string") return;
+						apiRequest("/api/avatar", {
+							method: "POST",
+							body: { avatar: base64 },
+						})
+							.then(() => {
+								showAlert("Avatar uploaded.", "success", true);
+								event.target.value = "";
+								fetchProfile();
+							})
+							.catch(handleApiError);
+					};
+					reader.readAsDataURL(file);
+				}
+
+				function handleApiError(error) {
+					if (error.status === 401) {
+						showAlert("Session expired. Please sign in again.", "error");
+						persistAccount(null, { silent: true });
+						showAuthPanel();
+						return;
+					}
+					const message =
+						error?.message || "Unable to reach the FixCraft API right now.";
+					showAlert(message, "error");
+					const fallbackView = state.profile
+						? "ready"
+						: state.account
+						? "loading"
+						: "empty";
+					root.dataset.view = fallbackView;
+				}
+
+				let alertTimer = null;
+				function showAlert(message, variant = "info", temporary = false) {
+					if (!alertBanner) return;
+					alertBanner.textContent = message;
+					alertBanner.dataset.visible = "true";
+					alertBanner.className = "alert-banner";
+					if (variant === "error") {
+						alertBanner.classList.add("error");
+					} else if (variant === "success") {
+						alertBanner.classList.add("success");
+					}
+					if (alertTimer) {
+						clearTimeout(alertTimer);
+					}
+					if (temporary) {
+						alertTimer = setTimeout(() => {
+							alertBanner.dataset.visible = "false";
+						}, 3000);
+					}
+				}
 			})();
 		</script>
 	</body>
