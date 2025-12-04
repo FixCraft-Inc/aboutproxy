@@ -17,6 +17,7 @@
 				username: payload.username || null,
 				displayName: payload.displayName || payload.username || payload.email || null,
 				plan: payload.plan || null,
+				avatarUrl: payload.avatarUrl || null,
 				lastSync: payload.updatedAt || Date.now(),
 			};
 			try {

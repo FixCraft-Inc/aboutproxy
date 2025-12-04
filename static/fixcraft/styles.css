@@ -212,6 +212,10 @@ body.show-auth {
 	flex-wrap: wrap;
 }
 
+.hero-actions .btn {
+	flex-shrink: 0;
+}
+
 .btn {
 	font: inherit;
 	border: 1px solid transparent;
@@ -343,6 +347,16 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.card header > div {
+	flex: 1;
+	min-width: 0;
+}
+
+.card header .btn {
+	flex-shrink: 0;
 }
 
 .eyebrow {
@@ -383,12 +397,17 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 	font-size: 0.9rem;
 }
 
+.switch-row > div {
+	flex: 1;
+	min-width: 0;
+}
+
 .fc-switch {
 	position: relative;
 	display: inline-flex;
 	align-items: center;
-	width: 64px;
-	height: 34px;
+	width: 76px;
+	height: 38px;
 }
 
 .fc-switch input {
@@ -410,10 +429,10 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 .fc-switch span::after {
 	content: "";
 	position: absolute;
-	top: 3px;
-	left: 4px;
-	width: 28px;
-	height: 28px;
+	top: 2px;
+	left: 2px;
+	width: 34px;
+	height: 34px;
 	border-radius: 50%;
 	background: #0d111d;
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
@@ -425,7 +444,7 @@ body[data-account-linked="true"] [data-when="unlinked"] {
 }
 
 .fc-switch input:checked + span::after {
-	transform: translateX(28px);
+	transform: translateX(38px);
 }
 
 .token-box {

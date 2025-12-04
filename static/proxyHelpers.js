@@ -30,8 +30,71 @@ function encodeUrl(url, proxy) {
     }
 }
 
+let uvSwReadyPromise = null;
+
+function normalizeScope(prefix) {
+    if (typeof prefix !== "string" || !prefix.length) {
+        return "/service/";
+    }
+    const base = prefix.startsWith("/") ? prefix : `/${prefix}`;
+    return base.endsWith("/") ? base : `${base}/`;
+}
+
+function waitForActiveWorker(registration) {
+    if (!registration) {
+        return Promise.resolve(null);
+    }
+    if (registration.active) {
+        return Promise.resolve(registration);
+    }
+    const worker = registration.installing || registration.waiting;
+    if (!worker) {
+        return Promise.resolve(registration);
+    }
+    return new Promise((resolve) => {
+        const cleanup = () => worker.removeEventListener("statechange", handle);
+        function handle() {
+            if (worker.state === "activated" || worker.state === "redundant") {
+                cleanup();
+                resolve(registration);
+            }
+        }
+        worker.addEventListener("statechange", handle);
+    });
+}
+
+function ensureUvServiceWorker() {
+    if (typeof navigator === "undefined" || !navigator.serviceWorker) {
+        return null;
+    }
+    if (uvSwReadyPromise) {
+        return uvSwReadyPromise;
+    }
+    const scope = normalizeScope(
+        (__uv$config && __uv$config.prefix) || "/service/",
+    );
+    uvSwReadyPromise = navigator.serviceWorker
+        .getRegistration(scope)
+        .then((existing) => {
+            if (existing) {
+                return existing;
+            }
+            return navigator.serviceWorker.register("/sw.js", { scope });
+        })
+        .then((registration) => waitForActiveWorker(registration))
+        .catch((error) => {
+            console.warn("[uv] service worker registration failed:", error);
+            return null;
+        });
+    return uvSwReadyPromise;
+}
+
 function proxyUsingUV(url, callback) {
-    // window.navigator.serviceWorker.register('./sw.js', {scope: "/service"}).then(() => {
-        callback(baseUrlFor("UV") + encodeUrl(url, "UV"));
-    // });
+    const proxied = baseUrlFor("UV") + encodeUrl(url, "UV");
+    const ready = ensureUvServiceWorker();
+    if (ready && typeof ready.then === "function") {
+        ready.finally(() => callback(proxied));
+        return;
+    }
+    callback(proxied);
 }

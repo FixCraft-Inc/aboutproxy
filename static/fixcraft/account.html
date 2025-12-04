@@ -275,7 +275,7 @@
 					document.body.innerHTML = `
             <main class="account-shell account-shell--disabled">
               <h1>Account controls unavailable</h1>
-              <p>This static build cannot access the FixCraft API. Deploy the official IridiumOS stack to manage identities.</p>
+              <p>This static build cannot reach the FixCraft identity service. Deploy the official IridiumOS stack to manage identities.</p>
             </main>
           `;
 					return;
@@ -379,6 +379,12 @@
 				stats.platform.textContent = state.environment;
 				updateLinkHint();
 				syncAccountView();
+				if (state.account?.avatarUrl) {
+					updateAvatar(
+						state.account.avatarUrl,
+						state.account.displayName || state.account.email || state.account.username,
+					);
+				}
 				bootstrapFromServer();
 
 				window.addEventListener("fixcraft-account:linked", (event) => {
@@ -391,6 +397,7 @@
 							username: payload.username,
 							displayName: payload.displayName,
 							plan: payload.plan,
+							avatarUrl: payload.avatarUrl || null,
 							lastSync: payload.updatedAt || Date.now(),
 						},
 						{ silent: true },
@@ -470,11 +477,13 @@
 						document.body.dataset.accountLinked = "false";
 						updateLinkHint();
 						syncAccountView();
+						updateAvatar(null);
 						if (!opts.silent) {
 							showAlert("Signed out of FixCraft.", "success");
 						}
 						return;
 					}
+					const previousAccount = state.account;
 					const payload = {
 						token: value.token,
 						email: value.email || value.user?.email || null,
@@ -487,6 +496,12 @@
 							null,
 						plan: value.plan || value.user?.tier || null,
 						lastSync: value.lastSync || Date.now(),
+						avatarUrl:
+							value.avatarUrl ||
+							value.user?.avatarUrl ||
+							value.user?.avatar ||
+							previousAccount?.avatarUrl ||
+							null,
 					};
 					safePersistSetting(payload);
 					try {
@@ -499,6 +514,10 @@
 					}
 					state.account = payload;
 					document.body.dataset.accountLinked = "true";
+					updateAvatar(
+						payload.avatarUrl,
+						payload.displayName || payload.email || payload.username,
+					);
 					updateLinkHint();
 					syncAccountView();
 					if (!opts.silent) {
@@ -545,6 +564,10 @@
 									payload.email ||
 									payload.username,
 								plan: payload.plan || state.account?.plan,
+								avatarUrl:
+									payload.avatarUrl ||
+									state.account?.avatarUrl ||
+									null,
 								lastSync: payload.updatedAt || Date.now(),
 							},
 							{ silent: true },
@@ -596,6 +619,26 @@
 						statusChip.textContent = "FixCraft ID linked";
 						statusChip.className = "status-chip status-chip--ready";
 					}
+					if (linked) {
+						const name =
+							state.profile?.fullName ||
+							state.account?.displayName ||
+							state.account?.email ||
+							state.account?.username ||
+							"FixCraft member";
+						heroName.textContent = name;
+						heroEmail.textContent =
+							state.profile?.email ||
+							state.account?.email ||
+							"Linked to FixCraft workspace.";
+						const planLabel =
+							state.profile?.plan || state.account?.plan || "FixCraft Free";
+						planBadge.textContent = planLabel;
+						planBadge.dataset.tier = determineTier(planLabel, state.profile?.role);
+						if (!profileReady) {
+							stats.plan.textContent = planLabel;
+						}
+					}
 					stats.sync.textContent = formatSyncTime(state.account?.lastSync);
 				}
 
@@ -636,6 +679,7 @@
 								email: profile.email,
 								displayName: profile.fullName || profile.email,
 								plan: profile.plan,
+								avatarUrl: profile.avatarUrl || state.account?.avatarUrl || null,
 								lastSync: Date.now(),
 							},
 							{ silent: true },
@@ -1048,6 +1092,7 @@
 								displayName:
 									payload.user?.displayName || payload.user?.username,
 								plan: payload.user?.tier,
+								avatarUrl: payload.user?.avatarUrl || payload.user?.avatar || null,
 								lastSync: Date.now(),
 							});
 							loginForm.reset();
@@ -1181,7 +1226,7 @@
 						return;
 					}
 					const message =
-						error?.message || "Unable to reach the FixCraft API right now.";
+						error?.message || "Unable to reach the FixCraft cloud right now.";
 					showAlert(message, "error");
 					const fallbackView = state.profile
 						? "ready"
