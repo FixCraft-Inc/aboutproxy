@@ -91,6 +91,9 @@
 							if (script.includes("/sw.js") && !script.includes("iridium-sw.js")) {
 								return Promise.resolve();
 							}
+							if (script.includes("notifications-sw.js")) {
+								return Promise.resolve();
+							}
 							if (script.includes("iridium-sw.js")) {
 								try {
 									reg.active?.postMessage({ type: "fixcraft:sw:disable" });

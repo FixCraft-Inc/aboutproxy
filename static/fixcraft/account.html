@@ -294,6 +294,9 @@
 				const API_BASE = defaultApi.replace(/\/$/, "");
 				const ACCOUNT_LINK_ENDPOINT = "/fixcraft/account-link";
 				const desktop = window.top?.iridium || window.top?.anura;
+				const NOTIFICATION_SW_PATH = "/fixcraft/notifications-sw.js";
+				const NOTIFICATION_SW_SCOPE = "/fixcraft/";
+				const ENABLE_PUSH_NOTIFICATIONS = true;
 				if (!window.chrome) {
 					window.chrome = {};
 				}
@@ -388,12 +391,16 @@
 				let sessionHeartbeatTimer = null;
 				let signOutArmed = false;
 				let signOutConfirmTimer = null;
+				let notificationSetupPromise = null;
 				document.body.dataset.accountLinked = state.account ? "true" : "false";
 				document.body.dataset.desktop = desktop ? "true" : "false";
 				disableServiceWorkers();
 				stats.platform.textContent = state.environment;
 				updateLinkHint();
 				syncAccountView();
+				if (ENABLE_PUSH_NOTIFICATIONS && state.account?.token) {
+					maybeInitNotifications();
+				}
 				if (state.account?.avatarUrl) {
 					updateAvatar(
 						state.account.avatarUrl,
@@ -425,6 +432,9 @@
 				if (state.account?.token) {
 					fetchProfile();
 					scheduleSessionHeartbeat();
+					if (ENABLE_PUSH_NOTIFICATIONS) {
+						maybeInitNotifications();
+					}
 				} else {
 					root.dataset.view = "empty";
 				}
@@ -534,6 +544,7 @@
 						updateAvatar(null);
 						persistSessionId(null);
 						stopSessionHeartbeat();
+						resetNotificationSetup();
 						if (!opts.silent) {
 							showAlert("Signed out of FixCraft.", "success");
 						}
@@ -577,6 +588,9 @@
 					updateLinkHint();
 					syncAccountView();
 					scheduleSessionHeartbeat();
+					if (ENABLE_PUSH_NOTIFICATIONS) {
+						maybeInitNotifications();
+					}
 					if (!opts.silent) {
 						showAlert("Linked to FixCraft.", "success");
 					}
@@ -1268,6 +1282,7 @@
 					} catch {
 						// ignore
 					}
+					notifyNotificationWorker({ type: "fixcraft:notifications:clear" });
 					callRemoteClear();
 					nukeCachesAndServiceWorkers();
 					clearAllCookies();
@@ -1353,6 +1368,9 @@
 										if (script.includes("/sw.js") && !script.includes("iridium-sw.js")) {
 											return Promise.resolve();
 										}
+										if (script.includes("notifications-sw.js")) {
+											return Promise.resolve();
+										}
 										// keep iridium-sw but request it to self-disable
 										if (script.includes("iridium-sw.js")) {
 											try {
@@ -1391,6 +1409,95 @@
 							nukeCachesAndServiceWorkers();
 						},
 					};
+				}
+
+				function resetNotificationSetup() {
+					notificationSetupPromise = null;
+				}
+
+				function maybeInitNotifications() {
+					if (!ENABLE_PUSH_NOTIFICATIONS) return;
+					if (!state.account?.token) return;
+					if (notificationSetupPromise) return;
+					if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+						return;
+					}
+					notificationSetupPromise = initializeNotificationWorker()
+						.catch((error) => {
+							console.warn("[notifications] init failed", error);
+						})
+						.finally(() => {
+							notificationSetupPromise = null;
+						});
+				}
+
+				async function initializeNotificationWorker() {
+					let registration;
+					try {
+						registration = await navigator.serviceWorker.register(NOTIFICATION_SW_PATH, {
+							scope: NOTIFICATION_SW_SCOPE,
+						});
+					} catch (error) {
+						console.warn("[notifications] unable to register SW", error);
+						return;
+					}
+					let subscription = await registration.pushManager.getSubscription();
+					if (!subscription) {
+						const vapidKey = await fetchVapidKey();
+						if (!vapidKey) return;
+						const appServerKey = urlBase64ToUint8Array(vapidKey);
+						subscription = await registration.pushManager.subscribe({
+							userVisibleOnly: true,
+							applicationServerKey: appServerKey,
+						});
+					}
+					if (subscription) {
+						await apiRequest("/api/notifications/subscribe", {
+							method: "POST",
+							body: { subscription: subscription.toJSON ? subscription.toJSON() : subscription },
+						});
+					}
+				}
+
+				async function fetchVapidKey() {
+					try {
+						const response = await apiRequest("/api/notifications/vapid-public-key");
+						return response?.key || null;
+					} catch (error) {
+						console.warn("[notifications] vapid key fetch failed", error);
+						return null;
+					}
+				}
+
+				function notifyNotificationWorker(message) {
+					if (!ENABLE_PUSH_NOTIFICATIONS) return;
+					if (!navigator.serviceWorker?.getRegistrations) return;
+					navigator.serviceWorker
+						.getRegistrations()
+						.then((regs) => {
+							regs.forEach((reg) => {
+								const script = reg.active?.scriptURL || reg.scriptURL || "";
+								if (script.includes("notifications-sw.js")) {
+									try {
+										reg.active?.postMessage(message);
+									} catch {
+										// ignore
+									}
+								}
+							});
+						})
+						.catch(() => {});
+				}
+
+				function urlBase64ToUint8Array(base64String) {
+					const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+					const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+					const rawData = atob(base64);
+					const outputArray = new Uint8Array(rawData.length);
+					for (let i = 0; i < rawData.length; ++i) {
+						outputArray[i] = rawData.charCodeAt(i);
+					}
+					return outputArray;
 				}
 
 				function handleCopyToken() {
