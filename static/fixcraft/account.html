@@ -6,10 +6,152 @@
 		<title>FixCraft Identity Center</title>
 		<link rel="stylesheet" href="styles.css" />
 		<script src="../build-flags.js"></script>
+		<style>
+			.settings-layout {
+				display: flex;
+				gap: 18px;
+				align-items: flex-start;
+				min-height: 100vh;
+				padding: 16px;
+			}
+			.settings-nav {
+				width: 220px;
+				background: #0f1524;
+				border: 1px solid rgba(255, 255, 255, 0.05);
+				border-radius: 16px;
+				padding: 14px 12px;
+				position: sticky;
+				top: 16px;
+				margin-top: 8px;
+			}
+			.settings-nav h4 {
+				margin: 6px 10px 8px;
+				font-size: 12px;
+				color: rgba(255, 255, 255, 0.6);
+				letter-spacing: 0.02em;
+				text-transform: uppercase;
+			}
+			.settings-nav ul {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+			.settings-nav .nav-item {
+				width: 100%;
+				border: 0;
+				background: transparent;
+				color: rgba(255, 255, 255, 0.86);
+				text-align: left;
+				padding: 10px 12px;
+				border-radius: 10px;
+				cursor: pointer;
+				display: flex;
+				gap: 10px;
+				align-items: center;
+				transition: background 0.18s ease, color 0.18s ease;
+				font-weight: 600;
+			}
+			.settings-nav .nav-item:hover {
+				background: rgba(255, 255, 255, 0.06);
+			}
+			.settings-nav .nav-item.active {
+				background: rgba(78, 91, 245, 0.25);
+				color: #e8ecff;
+				box-shadow: inset 0 0 0 1px rgba(78, 91, 245, 0.35);
+			}
+			.settings-content {
+				flex: 1;
+				min-width: 0;
+				padding: 16px 12px 28px;
+			}
+			.settings-section {
+				display: none;
+			}
+			.settings-section.active {
+				display: block;
+			}
+			.grid {
+				gap: 18px;
+				margin-bottom: 18px;
+			}
+			.account-hero,
+			.quick-stats {
+				margin-bottom: 18px;
+			}
+			.alert-banner {
+				margin-bottom: 12px;
+			}
+			.quick-stats {
+				margin-top: 6px;
+			}
+			.link-hint {
+				margin-bottom: 12px;
+			}
+			.twofa-input {
+				background: #0d1220;
+				border: 1px solid #1f2a3f;
+				color: #e9edf7;
+				width: 200px;
+				padding: 12px 14px;
+				border-radius: 12px;
+				font-weight: 600;
+			}
+			.twofa-code {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			.twofa-setup {
+				gap: 12px;
+			}
+			.twofa-actions {
+				gap: 12px;
+				display: flex;
+				flex-wrap: wrap;
+				margin-top: 8px;
+			}
+			.hero-actions {
+				gap: 10px;
+			}
+			.session-list {
+				margin-top: 8px;
+			}
+			.btn.small,
+			.btn.outline.small {
+				padding: 5px 9px;
+				font-size: 12px;
+				min-height: 32px;
+			}
+			body[data-account-linked="false"] .settings-nav {
+				display: none;
+			}
+			body[data-account-linked="false"] .settings-layout {
+				padding: 0 14px 24px;
+				gap: 0;
+			}
+			body[data-account-linked="false"] .settings-content {
+				width: 100%;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="fc-backdrop" aria-hidden="true"></div>
-		<main class="account-shell" data-view="loading">
+		<div class="settings-layout">
+			<aside class="settings-nav">
+				<h4>User Settings</h4>
+				<ul>
+					<li><button class="nav-item active" data-section-target="account">My Account</button></li>
+					<li><button class="nav-item" data-section-target="security">Security &amp; Login</button></li>
+					<li><button class="nav-item" data-section-target="devices">Devices &amp; Sessions</button></li>
+					<li><button class="nav-item" data-section-target="profile">Contact &amp; Profile</button></li>
+				</ul>
+			</aside>
+			<div class="settings-content">
+		<main class="account-shell" data-view="loading" id="my-account">
+			<div class="settings-section active" data-section="account">
 			<header class="account-hero">
 				<div class="hero-meta">
 					<div class="avatar" data-avatar aria-label="Account avatar">FC</div>
@@ -84,14 +226,41 @@
 					<h4>Last sync</h4>
 					<p data-stat-sync>Never</p>
 				</article>
+				<article>
+					<h4>Rate limit</h4>
+					<p data-stat-rate>—</p>
+				</article>
 			</section>
 
 			<section class="grid">
+				<article class="card perks-card">
+					<header>
+						<div>
+							<p class="eyebrow">Perks</p>
+							<h2>Included with your plan</h2>
+						</div>
+					</header>
+					<ul class="perks-grid" data-perk-list>
+						<li>Link your FixCraft ID to surface workspace perks.</li>
+					</ul>
+					<div class="perk-actions">
+						<button class="btn primary" data-action="open-portal">
+							Manage subscription
+						</button>
+						<button class="btn outline" data-action="support">
+							Contact support
+						</button>
+					</div>
+				</article>
+			</section>
+			</div>
+
+			<section class="grid settings-section" data-section="security">
 				<article class="card security-card">
 					<header>
 						<div>
 							<p class="eyebrow">Security</p>
-							<h2>Protection controls</h2>
+							<h2 id="security-login">Security &amp; Login</h2>
 						</div>
 						<button class="btn ghost small" data-action="change-password">
 							Change password
@@ -100,14 +269,41 @@
 					<div class="switch-row">
 						<div>
 							<strong>Two-factor authentication</strong>
-							<p>
-								Add an extra verification step for every sign-in attempt.
-							</p>
+							<p>Keep sign-ins gated behind a 6-digit code.</p>
 						</div>
-						<label class="fc-switch">
-							<input type="checkbox" data-pref="twoFactorEnabled" />
-							<span></span>
-						</label>
+						<div class="pill" data-twofa-status>Unknown</div>
+					</div>
+					<div class="twofa-setup" data-twofa-panel>
+						<div class="twofa-qr" data-twofa-qr>QR code will appear here.</div>
+						<div class="twofa-body">
+							<p class="twofa-status-text" data-twofa-status-text>2FA is off.</p>
+							<div class="twofa-secret" data-twofa-secret-row hidden>
+								<span>Secret</span>
+								<code data-twofa-secret>—</code>
+							</div>
+							<label class="twofa-code">
+								Verification code
+								<input
+									type="text"
+									class="twofa-input"
+									inputmode="numeric"
+									pattern="[0-9]*"
+									placeholder="123 456"
+									data-twofa-code
+								/>
+							</label>
+							<div class="twofa-actions">
+								<button class="btn ghost small" type="button" data-action="2fa-setup">
+									Generate QR
+								</button>
+								<button class="btn primary small" type="button" data-action="2fa-verify">
+									Verify &amp; Enable
+								</button>
+								<button class="btn danger small" type="button" data-action="2fa-disable">
+									Disable
+								</button>
+							</div>
+						</div>
 					</div>
 					<div class="switch-row">
 						<div>
@@ -130,12 +326,14 @@
 						</div>
 					</div>
 				</article>
+			</section>
 
+			<section class="grid settings-section" data-section="devices">
 				<article class="card sessions-card">
 					<header>
 						<div>
 							<p class="eyebrow">Sessions</p>
-							<h2>Active devices</h2>
+							<h2 id="devices-sessions">Active devices</h2>
 						</div>
 						<button class="btn ghost small" data-action="refresh">
 							Refresh
@@ -147,12 +345,14 @@
 						</li>
 					</ul>
 				</article>
+			</section>
 
+			<section class="grid settings-section" data-section="profile">
 				<article class="card profile-card">
 					<header>
 						<div>
 							<p class="eyebrow">Profile</p>
-							<h2>Contact preferences</h2>
+							<h2 id="contact-profile">Contact preferences</h2>
 						</div>
 					</header>
 					<form data-form="profile">
@@ -189,6 +389,7 @@
 								class="btn outline small"
 								type="button"
 								data-action="save-avatar"
+								style="height:40px"
 							>
 								Update avatar
 							</button>
@@ -211,28 +412,10 @@
 						</label>
 					</div>
 				</article>
-
-				<article class="card perks-card">
-					<header>
-						<div>
-							<p class="eyebrow">Perks</p>
-							<h2>Included with your plan</h2>
-						</div>
-					</header>
-					<ul class="perks-grid" data-perk-list>
-						<li>Link your FixCraft ID to surface workspace perks.</li>
-					</ul>
-					<div class="perk-actions">
-						<button class="btn primary" data-action="open-portal">
-							Manage subscription
-						</button>
-						<button class="btn outline" data-action="support">
-							Contact support
-						</button>
-					</div>
-				</article>
 			</section>
 		</main>
+			</div>
+		</div>
 
 		<aside class="auth-panel" data-auth-panel hidden>
 			<form class="auth-card" data-form="signin">
@@ -261,6 +444,17 @@
 						type="password"
 						autocomplete="current-password"
 						required
+					/>
+				</label>
+				<label data-auth-2fa hidden>
+					2FA code
+					<input
+						name="code"
+						type="text"
+						inputmode="numeric"
+						pattern="[0-9]*"
+						autocomplete="one-time-code"
+						placeholder="123 456"
 					/>
 				</label>
 				<button class="btn primary" type="submit">Sign in</button>
@@ -346,16 +540,34 @@
 				const loginForm = document.querySelector('[data-form="signin"]');
 				const authPanel = document.querySelector("[data-auth-panel]");
 				const authMessage = document.querySelector("[data-auth-message]");
+				const authTwoFaField = document.querySelector("[data-auth-2fa]");
 				const toggles = Array.from(document.querySelectorAll("[data-pref]"));
 				const tokenHint = document.querySelector("[data-token-hint]");
 				const avatarFileInput = document.querySelector("[data-avatar-file]");
 				const signOutButton = document.querySelector('[data-action="unlink"]');
+				const navItems = Array.from(
+					document.querySelectorAll(".settings-nav [data-section-target]"),
+				);
+				const sections = Array.from(document.querySelectorAll(".settings-section"));
+				const twoFaControls = {
+					panel: document.querySelector("[data-twofa-panel]"),
+					qr: document.querySelector("[data-twofa-qr]"),
+					statusText: document.querySelector("[data-twofa-status-text]"),
+					secretRow: document.querySelector("[data-twofa-secret-row]"),
+					secret: document.querySelector("[data-twofa-secret]"),
+					codeInput: document.querySelector("[data-twofa-code]"),
+					setupBtn: document.querySelector('[data-action="2fa-setup"]'),
+					verifyBtn: document.querySelector('[data-action="2fa-verify"]'),
+					disableBtn: document.querySelector('[data-action="2fa-disable"]'),
+					status: document.querySelector("[data-twofa-status]"),
+				};
 				const stats = {
 					plan: document.querySelector("[data-stat-plan]"),
 					location: document.querySelector("[data-stat-location]"),
 					timezone: document.querySelector("[data-stat-timezone]"),
 					sync: document.querySelector("[data-stat-sync]"),
 					platform: document.querySelector("[data-stat-platform]"),
+					rate: document.querySelector("[data-stat-rate]"),
 				};
 
 				const PLAN_PERKS = {
@@ -414,6 +626,11 @@
 					loading: false,
 					sessionId: readStoredSessionId(),
 				};
+				const twoFaState = {
+					secret: null,
+					otpauthUrl: null,
+				};
+				initSectionNav();
 
 				let revealTimer = null;
 				let avatarObjectUrl = null;
@@ -422,6 +639,7 @@
 				let signOutArmed = false;
 				let signOutConfirmTimer = null;
 				let notificationSetupPromise = null;
+				let messageListenerAttached = false;
 				document.body.dataset.accountLinked = state.account ? "true" : "false";
 				document.body.dataset.desktop = desktop ? "true" : "false";
 				disableServiceWorkers();
@@ -478,6 +696,7 @@
 				);
 				avatarFileInput?.addEventListener("change", handleAvatarUpload);
 				window.addEventListener("focus", () => sendSessionHeartbeat());
+				attachRevocationListener();
 
 				function readAccount() {
 					const fromSettings = safeReadSetting();
@@ -517,6 +736,29 @@
 						}
 					} catch {
 						// noop
+					}
+				}
+
+				function attachRevocationListener() {
+					if (messageListenerAttached) return;
+					messageListenerAttached = true;
+					window.addEventListener("message", (event) => {
+						try {
+							if (event.data?.type === "fixcraft-account:signout") {
+								handleSessionRevoked("sw");
+							}
+						} catch {
+							// ignore
+						}
+					});
+					try {
+						navigator.serviceWorker?.addEventListener("message", (event) => {
+							if (event.data?.type === "fixcraft-account:signout") {
+								handleSessionRevoked("sw");
+							}
+						});
+					} catch {
+						// ignore
 					}
 				}
 
@@ -568,9 +810,12 @@
 						state.account = null;
 						state.profile = null;
 						state.sessions = [];
+						twoFaState.secret = null;
+						twoFaState.otpauthUrl = null;
 						document.body.dataset.accountLinked = "false";
 						updateLinkHint();
 						renderProxyUsage(null);
+						renderTwoFactor(null);
 						syncAccountView();
 						updateAvatar(null);
 						persistSessionId(null);
@@ -594,6 +839,11 @@
 							null,
 						plan: value.plan || value.user?.tier || null,
 						proxy: value.proxy || value.user?.proxy || previousAccount?.proxy || null,
+						rateLimits:
+							value.rateLimits ||
+							value.user?.rateLimits ||
+							previousAccount?.rateLimits ||
+							null,
 						lastSync: value.lastSync || Date.now(),
 						avatarUrl:
 							value.avatarUrl ||
@@ -619,6 +869,7 @@
 					);
 					updateLinkHint();
 					renderProxyUsage(state.account?.proxy);
+					renderTwoFactor(state.profile || state.account);
 					syncAccountView();
 					scheduleSessionHeartbeat();
 					if (ENABLE_PUSH_NOTIFICATIONS) {
@@ -641,6 +892,26 @@
 						desktop.platform ||
 						"Iridium";
 					return [platform, version].filter(Boolean).join(" • ");
+				}
+
+				function initSectionNav() {
+					const defaultSection = "account";
+					const show = (key) => {
+						sections.forEach((section) => {
+							const active = section.dataset.section === key;
+							section.classList.toggle("active", active);
+						});
+						navItems.forEach((item) => {
+							item.classList.toggle("active", item.dataset.sectionTarget === key);
+						});
+					};
+					navItems.forEach((item) => {
+						item.addEventListener("click", (event) => {
+							event.preventDefault();
+							show(item.dataset.sectionTarget);
+						});
+					});
+					show(defaultSection);
 				}
 
 				function scheduleSessionHeartbeat() {
@@ -666,6 +937,7 @@
 					const sessionId = ensureSessionId();
 					const tz =
 						Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+					const now = Date.now();
 					const payload = {
 						sessionId,
 						title: state.environment,
@@ -675,7 +947,7 @@
 							"unknown",
 						location: state.profile?.location || null,
 						timezone: tz,
-						lastSeen: "Just now",
+						lastActiveAt: now,
 						...extra,
 					};
 					apiRequest("/api/sessions/heartbeat", {
@@ -687,7 +959,11 @@
 								persistSessionId(response.sessionId);
 							}
 						})
-						.catch(() => {});
+						.catch((error) => {
+							if (error?.message === "session_revoked" || error?.status === 401) {
+								handleSessionRevoked("heartbeat");
+							}
+						});
 				}
 
 				async function bootstrapFromServer() {
@@ -765,10 +1041,12 @@
 							'<li class="session-empty">Link your account to see active sessions.</li>';
 						stats.plan.textContent = "Unlinked";
 						renderProxyUsage(null);
+						renderRateLimits(null);
 					} else if (!profileReady) {
 						root.dataset.view = "loading";
 						statusChip.textContent = "Syncing FixCraft profile…";
 						statusChip.className = "status-chip status-chip--sync";
+						renderRateLimits(state.account?.rateLimits || null);
 					} else {
 						root.dataset.view = "ready";
 						statusChip.textContent = "FixCraft ID linked";
@@ -796,6 +1074,7 @@
 							stats.plan.textContent = planLabel;
 						}
 						renderProxyUsage(state.account?.proxy);
+						renderRateLimits(state.profile?.rateLimits || state.account?.rateLimits || null);
 					}
 					stats.sync.textContent = formatSyncTime(state.account?.lastSync);
 				}
@@ -839,6 +1118,82 @@
 						usageDisplay.inlineLimit.textContent = limitLabel;
 				}
 
+				function renderRateLimits(rateLimits) {
+					if (!stats.rate) return;
+					const quota = state.profile?.proxy || state.account?.proxy || null;
+					if (quota) {
+						const used = Number(quota.used || 0).toLocaleString();
+						const limit =
+							quota.unlimited || quota.limit === Infinity || quota.limit === null || typeof quota.limit === "undefined"
+								? "∞"
+								: Number(quota.limit || 0).toLocaleString();
+						const resetLabel = formatResetTime(quota.resetAt);
+						stats.rate.innerHTML = `
+							<div class="rate-row">${used} / ${limit}</div>
+							<div class="rate-row hint">${resetLabel}</div>
+						`;
+						return;
+					}
+					if (rateLimits) {
+						const download = rateLimits.download || {};
+						const limitLabel =
+							download.limit === Infinity || download.limit === null || typeof download.limit === "undefined"
+								? "∞"
+								: Number(download.limit || 0).toLocaleString();
+						const resetLabel = download.resetAt ? formatResetTime(download.resetAt) : "Resets weekly";
+						stats.rate.innerHTML = `
+							<div class="rate-row">${Number(download.used || 0)} / ${limitLabel}</div>
+							<div class="rate-row hint">${resetLabel}</div>
+						`;
+						return;
+					}
+					stats.rate.textContent = "—";
+				}
+
+				function normalizeTimestamp(value) {
+					if (typeof value === "number" && Number.isFinite(value)) {
+						return value;
+					}
+					if (typeof value === "string" && value.trim()) {
+						const numeric = Number(value);
+						if (Number.isFinite(numeric)) return numeric;
+						const parsed = Date.parse(value);
+						if (!Number.isNaN(parsed)) return parsed;
+					}
+					return null;
+				}
+
+				function formatRelativeTime(input) {
+					const ts = normalizeTimestamp(input);
+					if (!ts) return "";
+					const diff = Date.now() - ts;
+					if (diff < 0) return "Just now";
+					const minutes = Math.floor(diff / 60000);
+					if (minutes < 3) return "Just now";
+					if (minutes < 60) {
+						return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+					}
+					const hours = Math.floor(minutes / 60);
+					if (hours < 24) {
+						return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+					}
+					const days = Math.floor(hours / 24);
+					return `${days} day${days === 1 ? "" : "s"} ago`;
+				}
+
+				function formatResetCountdown(timestamp) {
+					const ts = normalizeTimestamp(timestamp);
+					if (!ts) return "resets soon";
+					const diff = ts - Date.now();
+					if (diff <= 0) return "resets soon";
+					const minutes = Math.round(diff / 60000);
+					if (minutes < 60) return `resets in ${minutes}m`;
+					const hours = Math.round(minutes / 60);
+					if (hours < 24) return `resets in ${hours}h`;
+					const days = Math.round(hours / 24);
+					return `resets in ${days}d`;
+				}
+
 				function formatResetTime(timestamp) {
 					if (!timestamp) return "Resets weekly";
 					const date = new Date(timestamp);
@@ -871,6 +1226,7 @@
 								displayName: profile.fullName || profile.email,
 								plan: profile.plan,
 								avatarUrl: profile.avatarUrl || state.account?.avatarUrl || null,
+								rateLimits: profile.rateLimits || state.account?.rateLimits || null,
 								lastSync: Date.now(),
 							},
 							{ silent: true },
@@ -982,6 +1338,7 @@
 					stats.timezone.textContent =
 						profile.timezone || "Set your timezone";
 					stats.sync.textContent = formatSyncTime(state.account?.lastSync);
+					renderRateLimits(profile.rateLimits || state.account?.rateLimits || null);
 					if (heroSyncInline) {
 						heroSyncInline.textContent = `Sync ${formatSyncTime(
 							state.account?.lastSync,
@@ -995,8 +1352,12 @@
 						const pref = input.dataset.pref;
 						if (typeof profile[pref] !== "undefined") {
 							input.checked = Boolean(profile[pref]);
+							if (pref === "twoFactorEnabled") {
+								input.disabled = true;
+							}
 						}
 					});
+					renderTwoFactor(profile);
 				}
 
 				function fillProfileForm() {
@@ -1048,7 +1409,15 @@
 							metaParts.push(session.platform);
 						}
 						if (session.location) metaParts.push(session.location);
-						if (session.lastSeen) metaParts.push(session.lastSeen);
+						const lastActive =
+							normalizeTimestamp(
+								session.lastActiveAt ||
+									session.lastSeenAt ||
+									session.lastSeen ||
+									session.updatedAt,
+							) || null;
+						const lastActiveLabel = lastActive ? formatRelativeTime(lastActive) : "";
+						if (lastActiveLabel) metaParts.push(lastActiveLabel);
 						metaEl.textContent =
 							metaParts.join(" • ") || session.ip || "Recently active";
 						if (isCurrent) {
@@ -1078,6 +1447,149 @@
 								`<li><strong>${perk.title}</strong><span>${perk.body}</span></li>`,
 						)
 						.join("");
+				}
+
+				function showTwoFaQr(url) {
+					if (!twoFaControls.qr) return;
+					if (!url) {
+						twoFaControls.qr.innerHTML = "QR code will appear here.";
+						return;
+					}
+					const encoded = encodeURIComponent(url);
+					const imgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encoded}`;
+					twoFaControls.qr.innerHTML = `<img src="${imgSrc}" alt="2FA QR code" loading="lazy" />`;
+				}
+
+				function renderTwoFactor(profile) {
+					const enabled = Boolean(profile?.twoFactorEnabled);
+					const { panel, statusText, secretRow, secret, codeInput, setupBtn, verifyBtn, disableBtn, status } =
+						twoFaControls;
+					if (panel) {
+						panel.dataset.enabled = enabled ? "true" : "false";
+					}
+					if (status) {
+						status.textContent = enabled ? "2FA active" : "2FA off";
+						status.className = `pill ${enabled ? "status-chip--ready" : ""}`;
+					}
+					if (statusText) {
+						statusText.textContent = enabled
+							? "Use your authenticator code when signing in."
+							: "Scan the QR with your authenticator, then enter the 6-digit code.";
+					}
+					if (secretRow && secret) {
+						if (twoFaState.secret && !enabled) {
+							secretRow.hidden = false;
+							secret.textContent = twoFaState.secret;
+						} else {
+							secretRow.hidden = true;
+							secret.textContent = "—";
+						}
+					}
+					if (setupBtn) setupBtn.hidden = enabled;
+					if (verifyBtn) verifyBtn.hidden = enabled;
+					if (disableBtn) disableBtn.hidden = !enabled;
+					if (codeInput && enabled) {
+						codeInput.value = "";
+						codeInput.disabled = true;
+						codeInput.placeholder = "2FA enabled";
+					} else if (codeInput) {
+						codeInput.disabled = false;
+						codeInput.placeholder = "123 456";
+					}
+					if (enabled) {
+						twoFaState.secret = null;
+						twoFaState.otpauthUrl = null;
+						if (twoFaControls.qr) {
+							twoFaControls.qr.innerHTML =
+								'<div class="qr-placeholder">Authenticator linked</div>';
+						}
+					} else {
+						showTwoFaQr(twoFaState.otpauthUrl);
+					}
+				}
+
+				async function startTwoFactorSetup() {
+					if (!state.account?.token) {
+						showAlert("Link your FixCraft ID first.", "error");
+						return;
+					}
+					try {
+						const data = await apiRequest("/api/2fa/setup", {
+							method: "POST",
+							body: {},
+						});
+						twoFaState.secret = data?.secret || null;
+						twoFaState.otpauthUrl = data?.otpauthUrl || data?.qrData || null;
+						showTwoFaQr(twoFaState.otpauthUrl);
+						if (twoFaControls.secretRow && twoFaControls.secret) {
+							twoFaControls.secretRow.hidden = !twoFaState.secret;
+							if (twoFaState.secret) twoFaControls.secret.textContent = twoFaState.secret;
+						}
+						if (twoFaControls.codeInput) {
+							twoFaControls.codeInput.value = "";
+							twoFaControls.codeInput.focus();
+						}
+						renderTwoFactor(state.profile);
+						showAlert("Scan the QR code with your authenticator and enter the 6-digit code.", "success", true);
+					} catch (error) {
+						handleApiError(error);
+					}
+				}
+
+				async function verifyTwoFactorSetup() {
+					if (!state.account?.token) {
+						showAlert("Link your FixCraft ID first.", "error");
+						return;
+					}
+					const code = (twoFaControls.codeInput?.value || "").toString().trim();
+					if (!code) {
+						showAlert("Enter the 6-digit code from your authenticator.", "error", true);
+						return;
+					}
+					const body = { code };
+					if (twoFaState.secret) {
+						body.secret = twoFaState.secret;
+					}
+					try {
+						await apiRequest("/api/2fa/verify", { method: "POST", body });
+						twoFaState.secret = null;
+						twoFaState.otpauthUrl = null;
+						if (twoFaControls.codeInput) twoFaControls.codeInput.value = "";
+						await fetchProfile();
+						showAlert("Two-factor authentication enabled.", "success", true);
+					} catch (error) {
+						handleApiError(error);
+					}
+				}
+
+				async function disableTwoFactorFlow() {
+					if (!state.account?.token) {
+						showAlert("Link your FixCraft ID first.", "error");
+						return;
+					}
+					if (!state.profile?.twoFactorEnabled) {
+						showAlert("Two-factor is already off.", "error", true);
+						return;
+					}
+					const password = prompt("Enter your current password to disable 2FA");
+					if (!password) {
+						showAlert("Password is required to disable 2FA.", "error", true);
+						return;
+					}
+					const inlineCode = (twoFaControls.codeInput?.value || "").trim();
+					const code = inlineCode || prompt("Enter your current 2FA code");
+					try {
+						await apiRequest("/api/2fa/disable", {
+							method: "POST",
+							body: { password, code },
+						});
+						twoFaState.secret = null;
+						twoFaState.otpauthUrl = null;
+						await fetchProfile();
+						showAlert("Two-factor authentication disabled.", "success", true);
+					} catch (error) {
+						handleApiError(error);
+					}
 				}
 
 				function determineTier(plan = "", role = "") {
@@ -1204,15 +1716,7 @@
 
 				function formatSyncTime(ts) {
 					if (!ts) return "Never";
-					const diff = Date.now() - Number(ts);
-					if (diff < 30_000) return "Just now";
-					if (diff < 60_000) return "Moments ago";
-					const minutes = Math.floor(diff / 60000);
-					if (minutes < 60) return `${minutes}m ago`;
-					const hours = Math.floor(minutes / 60);
-					if (hours < 24) return `${hours}h ago`;
-					const days = Math.floor(hours / 24);
-					return `${days}d ago`;
+					return formatRelativeTime(ts) || "Never";
 				}
 
 				function handleActionClick(event) {
@@ -1257,6 +1761,15 @@
 							fillProfileForm();
 							showAlert("Form reset.", "success", true);
 							break;
+						case "2fa-setup":
+							startTwoFactorSetup();
+							break;
+						case "2fa-verify":
+							verifyTwoFactorSetup();
+							break;
+						case "2fa-disable":
+							disableTwoFactorFlow();
+							break;
 						default:
 							break;
 					}
@@ -1300,6 +1813,7 @@
 					authPanel.hidden = true;
 					document.body.classList.remove("show-auth");
 					loginForm?.reset();
+					showAuthCodeField(false);
 				}
 
 				function openPortal(url) {
@@ -1310,7 +1824,7 @@
 					window.open(url, "_blank", "noreferrer");
 				}
 
-				function handleSignOut(button) {
+				async function handleSignOut(button) {
 					if (!state.account) return;
 					const targetButton = button || signOutButton;
 					if (!signOutArmed) {
@@ -1329,8 +1843,13 @@
 						return;
 					}
 					resetSignOutButton();
+					try {
+						await revokeCurrentSession();
+					} catch (error) {
+						console.warn("[sessions] Failed to revoke current session", error);
+					}
 					persistAccount(null, { silent: true });
-					purgeClientState();
+					purgeClientState("user");
 					try {
 						if (webLoginUrl) {
 							window.location.href = webLoginUrl;
@@ -1339,6 +1858,18 @@
 						// ignore navigation errors
 					}
 					showAlert("Signed out and cleared local data.", "success", true);
+				}
+
+				async function revokeCurrentSession() {
+					if (!state.account?.token || !state.sessionId) return;
+					try {
+						await apiRequest(`/api/sessions/${encodeURIComponent(state.sessionId)}`, {
+							method: "DELETE",
+						});
+					} catch (error) {
+						if (error?.status === 404) return;
+						throw error;
+					}
 				}
 
 				function resetSignOutButton() {
@@ -1353,7 +1884,7 @@
 					}
 				}
 
-				function purgeClientState() {
+				function purgeClientState(reason = "user") {
 					try {
 						localStorage.removeItem("fixcraft-account");
 						localStorage.removeItem("fixcraft-session-id");
@@ -1366,18 +1897,31 @@
 					callRemoteClear();
 					nukeCachesAndServiceWorkers();
 					clearAllCookies();
-					dispatchSignoutEvent();
+					dispatchSignoutEvent(reason);
 				}
 
 				function callRemoteClear() {
+					const targets = new Set(["https://iridium.hostforever.org/clear"]);
 					try {
-						fetch("https://iridium.hostforever.org/clear", {
-							mode: "no-cors",
-							credentials: "include",
-							cache: "no-store",
-						}).catch(() => {});
+						targets.add(`${location.origin}/clear`);
 					} catch {
 						// ignore
+					}
+					try {
+						targets.add(`${API_BASE}/clear`);
+					} catch {
+						// ignore
+					}
+					for (const url of targets) {
+						try {
+							fetch(url, {
+								mode: "no-cors",
+								credentials: "include",
+								cache: "no-store",
+							}).catch(() => {});
+						} catch {
+							// ignore
+						}
 					}
 				}
 
@@ -1408,11 +1952,11 @@
 					return domains;
 				}
 
-				function dispatchSignoutEvent() {
+				function dispatchSignoutEvent(reason = "user") {
 					try {
 						window.dispatchEvent(
 							new CustomEvent("fixcraft-account:signout", {
-								detail: { reason: "user", cleared: true },
+								detail: { reason, cleared: true },
 							}),
 						);
 					} catch {
@@ -1421,7 +1965,7 @@
 					try {
 						if (window.top && window.top !== window) {
 							window.top.postMessage(
-								{ type: "fixcraft-account:signout", reason: "user" },
+								{ type: "fixcraft-account:signout", reason },
 								location.origin,
 							);
 						}
@@ -1622,6 +2166,7 @@
 					const formData = new FormData(loginForm);
 					const username = (formData.get("username") || "").toString().trim();
 					const password = (formData.get("password") || "").toString();
+					const code = (formData.get("code") || "").toString().trim();
 					if (!username || !password) {
 						setAuthMessage("Please provide both username and password.", true);
 						return;
@@ -1635,16 +2180,31 @@
 					fetch(`${API_BASE}/login`, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ username, password }),
+						body: JSON.stringify({ username, password, code }),
 					})
 						.then(async (resp) => {
 							const payload = await resp.json();
 							if (!resp.ok) {
+								if (payload?.error === "mfa_required") {
+									showAuthCodeField(true);
+									setAuthMessage("Enter the 6-digit code from your authenticator.", true);
+									return;
+								}
+								if (payload?.error === "invalid_totp") {
+									showAuthCodeField(true);
+									setAuthMessage("Invalid 2FA code. Try again.", true);
+									const codeInput = authTwoFaField?.querySelector("input[name='code']");
+									codeInput?.focus();
+									return;
+								}
 								const err =
 									payload?.error === "invalid_credentials"
 										? "Incorrect username or password."
 										: payload?.error || "Unable to sign in.";
 								throw new Error(err);
+							}
+							if (payload.sessionId) {
+								persistSessionId(payload.sessionId);
 							}
 							persistAccount({
 								token: payload.token,
@@ -1654,9 +2214,11 @@
 									payload.user?.displayName || payload.user?.username,
 								plan: payload.user?.tier,
 								avatarUrl: payload.user?.avatarUrl || payload.user?.avatar || null,
+								rateLimits: payload.user?.rateLimits || null,
 								lastSync: Date.now(),
 							});
 							loginForm.reset();
+							showAuthCodeField(false);
 							hideAuthPanel();
 							setAuthMessage("Signed in.", false);
 							fetchProfile();
@@ -1674,6 +2236,15 @@
 					if (!authMessage) return;
 					authMessage.textContent = message;
 					authMessage.style.color = isError ? "#ffb4c7" : "var(--fc-muted)";
+				}
+
+				function showAuthCodeField(visible) {
+					if (!authTwoFaField) return;
+					authTwoFaField.hidden = !visible;
+					if (!visible) {
+						const input = authTwoFaField.querySelector("input[name='code']");
+						if (input) input.value = "";
+					}
 				}
 
 				function handleProfileSubmit(event) {
@@ -1783,11 +2354,41 @@
 					reader.readAsDataURL(file);
 				}
 
+				function handleSessionRevoked(reason = "server") {
+					showAlert("This session was revoked. Clearing data…", "error");
+					persistAccount(null, { silent: true });
+					purgeClientState("revoked");
+					showAuthPanel();
+					try {
+						if (webLoginUrl) {
+							window.location.replace(webLoginUrl);
+						}
+					} catch {
+						// ignore
+					}
+				}
+
 				function handleApiError(error) {
 					if (error.status === 401) {
+						if (error?.message === "session_revoked") {
+							handleSessionRevoked("api");
+							return;
+						}
+						if (error?.message === "invalid_totp" || error?.message === "mfa_required") {
+							showAlert("Two-factor verification failed. Check your code and try again.", "error", true);
+							return;
+						}
 						showAlert("Session expired. Please sign in again.", "error");
 						persistAccount(null, { silent: true });
+						purgeClientState("expired");
 						showAuthPanel();
+						try {
+							if (webLoginUrl) {
+								window.location.replace(webLoginUrl);
+							}
+						} catch {
+							// ignore
+						}
 						return;
 					}
 					const message =
@@ -1801,26 +2402,26 @@
 					root.dataset.view = fallbackView;
 				}
 
-				let alertTimer = null;
-				function showAlert(message, variant = "info", temporary = false) {
-					if (!alertBanner) return;
-					alertBanner.textContent = message;
-					alertBanner.dataset.visible = "true";
-					alertBanner.className = "alert-banner";
-					if (variant === "error") {
-						alertBanner.classList.add("error");
-					} else if (variant === "success") {
-						alertBanner.classList.add("success");
-					}
-					if (alertTimer) {
-						clearTimeout(alertTimer);
-					}
-					if (temporary) {
-						alertTimer = setTimeout(() => {
-							alertBanner.dataset.visible = "false";
-						}, 3000);
-					}
+			let alertTimer = null;
+			function showAlert(message, variant = "info", temporary = false) {
+				if (!alertBanner) return;
+				alertBanner.textContent = message;
+				alertBanner.dataset.visible = "true";
+				alertBanner.className = "alert-banner";
+				if (variant === "error") {
+					alertBanner.classList.add("error");
+				} else if (variant === "success") {
+					alertBanner.classList.add("success");
 				}
+				if (alertTimer) {
+					clearTimeout(alertTimer);
+				}
+				if (temporary) {
+					alertTimer = setTimeout(() => {
+						alertBanner.dataset.visible = "false";
+					}, 1800);
+				}
+			}
 			})();
 		</script>
 	</body>
