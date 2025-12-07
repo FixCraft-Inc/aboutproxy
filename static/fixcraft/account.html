@@ -14,15 +14,35 @@
 				<div class="hero-meta">
 					<div class="avatar" data-avatar aria-label="Account avatar">FC</div>
 					<div>
-						<p class="status-chip status-chip--warn" data-status-chip>
-							Checking FixCraft status…
-						</p>
+						<div class="hero-topline">
+							<p class="status-chip status-chip--warn" data-status-chip>
+								Checking FixCraft status…
+							</p>
+							<div class="hero-metrics">
+								<div class="pill metric" data-hero-plan-inline>Plan —</div>
+								<div class="pill metric">
+									<span data-usage-inline-used>—</span>
+									<span class="usage-sep">/</span>
+									<span data-usage-inline-limit>—</span>
+								</div>
+								<div class="pill metric" data-hero-sync>Syncing…</div>
+							</div>
+						</div>
 						<h1 data-hero-name>FixCraft Identity</h1>
 						<p class="hero-email" data-hero-email>
 							Manage your FixCraft account on this device.
 						</p>
 						<div class="hero-plan" data-plan-badge data-tier="free">
 							Plan unknown
+						</div>
+						<div class="hero-usage" data-usage>
+							<p class="usage-label">Proxy allowance</p>
+							<div class="usage-values">
+								<span class="usage-count" data-usage-used>—</span>
+								<span class="usage-sep">/</span>
+								<span class="usage-limit" data-usage-limit>—</span>
+								<span class="usage-reset" data-usage-reset>Resets weekly</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -307,8 +327,18 @@
 				const heroEmail = document.querySelector("[data-hero-email]");
 				const planBadge = document.querySelector("[data-plan-badge]");
 				const statusChip = document.querySelector("[data-status-chip]");
+				const heroPlanInline = document.querySelector("[data-hero-plan-inline]");
+				const heroSyncInline = document.querySelector("[data-hero-sync]");
 				const linkHint = document.querySelector("[data-link-hint]");
 				const alertBanner = document.querySelector("[data-alert]");
+				const usageDisplay = {
+					container: document.querySelector("[data-usage]"),
+					used: document.querySelector("[data-usage-used]"),
+					limit: document.querySelector("[data-usage-limit]"),
+					reset: document.querySelector("[data-usage-reset]"),
+					inlineUsed: document.querySelector("[data-usage-inline-used]"),
+					inlineLimit: document.querySelector("[data-usage-inline-limit]"),
+				};
 				const perkList = document.querySelector("[data-perk-list]");
 				const sessionList = document.querySelector("[data-session-list]");
 				const sessionTemplate = document.getElementById("session-row");
@@ -540,6 +570,7 @@
 						state.sessions = [];
 						document.body.dataset.accountLinked = "false";
 						updateLinkHint();
+						renderProxyUsage(null);
 						syncAccountView();
 						updateAvatar(null);
 						persistSessionId(null);
@@ -562,6 +593,7 @@
 							value.user?.username ||
 							null,
 						plan: value.plan || value.user?.tier || null,
+						proxy: value.proxy || value.user?.proxy || previousAccount?.proxy || null,
 						lastSync: value.lastSync || Date.now(),
 						avatarUrl:
 							value.avatarUrl ||
@@ -586,6 +618,7 @@
 						payload.displayName || payload.email || payload.username,
 					);
 					updateLinkHint();
+					renderProxyUsage(state.account?.proxy);
 					syncAccountView();
 					scheduleSessionHeartbeat();
 					if (ENABLE_PUSH_NOTIFICATIONS) {
@@ -681,6 +714,7 @@
 									state.account?.displayName ||
 									payload.email ||
 									payload.username,
+								proxy: payload.proxy || state.account?.proxy || null,
 								plan: payload.plan || state.account?.plan,
 								avatarUrl:
 									payload.avatarUrl ||
@@ -718,6 +752,8 @@
 						root.dataset.view = "empty";
 						statusChip.textContent = "No account linked";
 						statusChip.className = "status-chip status-chip--warn";
+						if (heroPlanInline) heroPlanInline.textContent = "Plan —";
+						if (heroSyncInline) heroSyncInline.textContent = "Sync status";
 						heroName.textContent = "FixCraft Identity";
 						heroEmail.textContent =
 							"Link your FixCraft ID to sync premium resources.";
@@ -728,6 +764,7 @@
 						sessionList.innerHTML =
 							'<li class="session-empty">Link your account to see active sessions.</li>';
 						stats.plan.textContent = "Unlinked";
+						renderProxyUsage(null);
 					} else if (!profileReady) {
 						root.dataset.view = "loading";
 						statusChip.textContent = "Syncing FixCraft profile…";
@@ -736,6 +773,7 @@
 						root.dataset.view = "ready";
 						statusChip.textContent = "FixCraft ID linked";
 						statusChip.className = "status-chip status-chip--ready";
+						if (heroSyncInline) heroSyncInline.textContent = "In sync";
 					}
 					if (linked) {
 						const name =
@@ -753,9 +791,11 @@
 							state.profile?.plan || state.account?.plan || "FixCraft Free";
 						planBadge.textContent = planLabel;
 						planBadge.dataset.tier = determineTier(planLabel, state.profile?.role);
+						if (heroPlanInline) heroPlanInline.textContent = `Plan ${planLabel}`;
 						if (!profileReady) {
 							stats.plan.textContent = planLabel;
 						}
+						renderProxyUsage(state.account?.proxy);
 					}
 					stats.sync.textContent = formatSyncTime(state.account?.lastSync);
 				}
@@ -775,6 +815,39 @@
 					linkHint.textContent = `Signed in as ${
 						state.account.displayName || state.account.email || "FixCraft user"
 					}.`;
+				}
+
+				function renderProxyUsage(quota) {
+					if (!usageDisplay.used) return;
+					if (!quota) {
+						usageDisplay.used.textContent = "—";
+						usageDisplay.limit.textContent = "—";
+						usageDisplay.reset.textContent = "Resets weekly";
+						if (usageDisplay.inlineUsed) usageDisplay.inlineUsed.textContent = "—";
+						if (usageDisplay.inlineLimit) usageDisplay.inlineLimit.textContent = "—";
+						return;
+					}
+					const used = Number(quota.used || 0).toLocaleString();
+					const limitLabel = quota.unlimited
+						? "∞"
+						: Number(quota.limit || 0).toLocaleString();
+					usageDisplay.used.textContent = used;
+					usageDisplay.limit.textContent = limitLabel;
+					usageDisplay.reset.textContent = formatResetTime(quota.resetAt);
+					if (usageDisplay.inlineUsed) usageDisplay.inlineUsed.textContent = used;
+					if (usageDisplay.inlineLimit)
+						usageDisplay.inlineLimit.textContent = limitLabel;
+				}
+
+				function formatResetTime(timestamp) {
+					if (!timestamp) return "Resets weekly";
+					const date = new Date(timestamp);
+					return `Resets ${date.toLocaleString(undefined, {
+						month: "short",
+						day: "2-digit",
+						hour: "2-digit",
+						minute: "2-digit",
+					})}`;
 				}
 
 				async function fetchProfile() {
@@ -900,6 +973,7 @@
 						"Linked to FixCraft workspace.";
 					planBadge.textContent = plan;
 					planBadge.dataset.tier = tier;
+					if (heroPlanInline) heroPlanInline.textContent = `Plan ${plan}`;
 					stats.plan.textContent = `${plan}${
 						profile.role ? ` • ${profile.role}` : ""
 					}`;
@@ -908,6 +982,12 @@
 					stats.timezone.textContent =
 						profile.timezone || "Set your timezone";
 					stats.sync.textContent = formatSyncTime(state.account?.lastSync);
+					if (heroSyncInline) {
+						heroSyncInline.textContent = `Sync ${formatSyncTime(
+							state.account?.lastSync,
+						)}`;
+					}
+					renderProxyUsage(state.account?.proxy);
 					updateTokenHint();
 					updateAvatar(profile.avatarUrl, profile.fullName || profile.email);
 					fillProfileForm();

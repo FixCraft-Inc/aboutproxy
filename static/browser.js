@@ -3,7 +3,7 @@ class AboutBrowser {
     constructor(plugins) {
         this.branding = {
             name: "AboutBrowser",
-            version: "v0.9.1-beta"
+            version: "v0.9.4-alpha"
         }
         this.addBranding();
 
@@ -98,7 +98,11 @@ class AboutBrowser {
         // if(probeForChrome()) unfuckChrome();
         // sadly got removed
 
-        this.bareClient = new Ultraviolet.BareClient()
+        const bareList = Array.isArray(__uv$config?.bare)
+                ? __uv$config.bare
+                : [__uv$config?.bare || "/bare/"];
+        const bareUrl = new URL(bareList[0], window.location).toString();
+        this.bareClient = new Ultraviolet.BareClient(bareUrl);
 
         this.eventsInit();
 

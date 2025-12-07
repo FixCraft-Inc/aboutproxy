@@ -101,6 +101,32 @@ body.show-auth {
 	min-width: 260px;
 }
 
+.hero-topline {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.hero-metrics {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.hero-metrics .metric {
+	font-size: 0.85rem;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 999px;
+	padding: 0.4rem 0.8rem;
+	color: #dbe6ff;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
 .avatar {
 	width: clamp(86px, 12vw, 108px);
 	height: clamp(86px, 12vw, 108px);
@@ -203,6 +229,52 @@ body.show-auth {
 .hero-plan[data-tier="admin"] {
 	color: #fde68a;
 	border-color: rgba(250, 204, 21, 0.4);
+}
+
+.hero-usage {
+	margin-top: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	color: #c8d5f3;
+}
+
+.hero-usage .usage-label {
+	font-size: 0.85rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #98a8ce;
+	margin: 0;
+}
+
+.hero-usage .usage-values {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	flex-wrap: wrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.usage-count {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: #f8fbff;
+}
+
+.usage-limit {
+	font-size: 1rem;
+	color: #d6def6;
+}
+
+.usage-reset {
+	font-size: 0.9rem;
+	color: #9fb0d6;
+}
+
+.hero-plan[data-tier="admin"]::after {
+	content: "∞";
+	font-weight: 800;
+	margin-left: 6px;
 }
 
 .hero-actions {

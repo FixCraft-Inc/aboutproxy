@@ -3,7 +3,7 @@ class Settings {
         this.browser = browser;
         this.defaults = {
             currentProxyId: "UV",
-            searchEngineUrl: "https://www.google.com/search?q=",
+            searchEngineUrl: "https://search.brave.com/search?q=",
             startUrl: this.browser.resourcesProtocol + "start",
             installedExtensions: "[]",
             disabledExtensions: "[]",
@@ -66,4 +66,3 @@ class Settings {
         localStorage.setItem("settings", JSON.stringify(this.settings));
     }
 }
-

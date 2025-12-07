@@ -16,6 +16,7 @@ class Tab {
         this.currentFavi = '';
         this.isActive = false;
         this.isDevToolsActive = false;
+        this.lastTrackedUrl = null;
         this.handleUnload();
 
         if (!background) this.browser.chromeTabs.setCurrentTab(this.tabEl);
@@ -73,6 +74,7 @@ class Tab {
                 })
             }
         }
+        this.trackHistory(url);
         this.currentUrl = url;
 
         this.browser.extensions.injectDOMContentLoaded(this.currentUrl, this.iframe);
@@ -206,6 +208,32 @@ class Tab {
         document.title = this.browser.browserTitle;
     }
 
+    trackHistory(url) {
+        try {
+            if (!url) return;
+            if (
+                url === this.lastTrackedUrl ||
+                url === "about:blank" ||
+                url.startsWith(this.browser.resourcesProtocol) ||
+                url.startsWith(this.browser.fixcraftProtocol)
+            ) {
+                return;
+            }
+            this.lastTrackedUrl = url;
+            fetch("/history/log", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    url,
+                    ts: Date.now(),
+                }),
+            }).catch(() => {});
+        } catch {
+            // ignore
+        }
+    }
+
     navigateTo(url, callback) {
         var self = this;
         url = url ?? "";
@@ -234,6 +262,7 @@ class Tab {
             this.iframe.contentWindow.document.querySelector("head").appendChild(el);
             this.setBrowserAttributes();
         } else if (isUrl(url)) {
+            this.trackHistory(url);
             if (hasHttps(url)) {
                 proxyUsing(url, this.browser.settings.getSetting("currentProxyId"), (url) => {
                     self.iframe.src = url;
@@ -247,7 +276,9 @@ class Tab {
             }
             return;
         } else {
-            proxyUsing(this.browser.settings.getSetting("searchEngineUrl") + url, this.browser.settings.getSetting("currentProxyId"), (url) => {
+            const targetUrl = this.browser.settings.getSetting("searchEngineUrl") + url;
+            this.trackHistory(targetUrl);
+            proxyUsing(targetUrl, this.browser.settings.getSetting("currentProxyId"), (url) => {
                 self.iframe.src = url;
                 if (callback) callback();
             });
