@@ -511,6 +511,7 @@
 				const NOTIFICATION_SW_PATH = "/fixcraft/notifications-sw.js";
 				const NOTIFICATION_SW_SCOPE = "/fixcraft/";
 				const ENABLE_PUSH_NOTIFICATIONS = true;
+				let pushNotificationsAvailable = ENABLE_PUSH_NOTIFICATIONS;
 				if (!window.chrome) {
 					window.chrome = {};
 				}
@@ -617,6 +618,7 @@
 
 				const SESSION_STORAGE_KEY = "fixcraft-session-id";
 				const SESSION_HEARTBEAT_INTERVAL_MS = 60 * 1000;
+				const SESSION_COOKIE_NAME = "fc_device_id";
 
 				const state = {
 					account: readAccount(),
@@ -763,6 +765,15 @@
 				}
 
 				function readStoredSessionId() {
+					const cookieId = readCookie(SESSION_COOKIE_NAME);
+					if (cookieId) {
+						try {
+							localStorage.setItem(SESSION_STORAGE_KEY, cookieId);
+						} catch {
+							// ignore
+						}
+						return cookieId;
+					}
 					try {
 						return localStorage.getItem(SESSION_STORAGE_KEY) || null;
 					} catch {
@@ -775,8 +786,10 @@
 					try {
 						if (value) {
 							localStorage.setItem(SESSION_STORAGE_KEY, value);
+							writeSessionCookie(value);
 						} else {
 							localStorage.removeItem(SESSION_STORAGE_KEY);
+							writeSessionCookie("");
 						}
 					} catch {
 						// ignore
@@ -790,6 +803,32 @@
 					const generated = generateSessionId();
 					persistSessionId(generated);
 					return generated;
+				}
+
+				function writeSessionCookie(value) {
+					try {
+						document.cookie = `${SESSION_COOKIE_NAME}=${encodeURIComponent(value)}; Path=/; Secure; SameSite=None`;
+					} catch {
+						// ignore
+					}
+				}
+
+				function readCookie(name) {
+					try {
+						return document.cookie
+							.split(";")
+							.map((c) => c.trim())
+							.filter(Boolean)
+							.map((c) => c.split("="))
+							.reduce((acc, [k, ...rest]) => {
+								if (k === name) {
+									acc = decodeURIComponent(rest.join("="));
+								}
+								return acc;
+							}, null);
+					} catch {
+						return null;
+					}
 				}
 
 				function generateSessionId() {
@@ -2040,7 +2079,7 @@
 				}
 
 				function maybeInitNotifications() {
-					if (!ENABLE_PUSH_NOTIFICATIONS) return;
+					if (!pushNotificationsAvailable) return;
 					if (!state.account?.token) return;
 					if (notificationSetupPromise) return;
 					if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
@@ -2084,11 +2123,21 @@
 				}
 
 				async function fetchVapidKey() {
+					if (!pushNotificationsAvailable) return null;
 					try {
 						const response = await apiRequest("/api/notifications/vapid-public-key");
-						return response?.key || null;
+						if (!response?.key) {
+							pushNotificationsAvailable = false;
+							return null;
+						}
+						return response.key;
 					} catch (error) {
-						console.warn("[notifications] vapid key fetch failed", error);
+						if (error?.status === 404) {
+							pushNotificationsAvailable = false;
+							console.warn("[notifications] vapid key endpoint missing, disabling push");
+						} else {
+							console.warn("[notifications] vapid key fetch failed", error);
+						}
 						return null;
 					}
 				}
